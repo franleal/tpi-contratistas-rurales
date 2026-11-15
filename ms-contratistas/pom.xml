@@ -25,6 +25,12 @@
 
     <dependencies>
 
+        <dependency>
+            <groupId>ar.edu.tpi</groupId>
+            <artifactId>agro-commons</artifactId>
+            <version>1.0.0</version>
+        </dependency>
+
         <!-- API REST -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
