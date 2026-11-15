@@ -22,17 +22,17 @@ Backend de Aplicaciones — UTN FRC. Proyecto de backend basado en microservicio
 | `ms-campos` | Dominio de campos y lotes | Solo red Docker |
 | `ms-contratistas` | Dominio de contratistas | Solo red Docker |
 | `ms-trabajos` | Dominio de trabajos | Solo red Docker |
-| `postgres` | Persistencia, esquemas aislados | Solo red Docker |
+| `postgres` | Persistencia, esquemas aislados | `localhost:5432` (desarrollo local) |
 
 PostgreSQL contiene cuatro esquemas con usuarios propios: `campos`/`campos_app`, `contratistas`/`contratistas_app`, `trabajos`/`trabajos_app` y `keycloak`/`keycloak`.
 
-Solo el Gateway y Keycloak publican puertos al host (en `127.0.0.1`). No se accede a los microservicios directamente desde la PC cuando se utiliza el Compose completo.
+En esta rama el Gateway, Keycloak y PostgreSQL publican puertos en `127.0.0.1`. Los tres microservicios se comunican dentro de la red de Docker. Para cumplir la *Trusted zone* del enunciado, queda pendiente mover el puerto de PostgreSQL a un archivo de Compose exclusivo del modo IntelliJ.
 
 ## Requisitos previos
 
 - Git.
 - Docker Desktop con Docker Engine activo y Docker Compose.
-- Puertos locales **8080** y **8081** disponibles.
+- Puertos locales **8080**, **8081** y **5432** disponibles con el Compose actual.
 
 **No es necesario instalar Java ni Maven para levantar el proyecto con Docker**: las imágenes construyen los JAR dentro de sus etapas Maven. Para ejecutar proyectos desde IntelliJ sí se necesita JDK 21.
 
@@ -44,6 +44,8 @@ Solo el Gateway y Keycloak publican puertos al host (en `127.0.0.1`). No se acce
    git clone https://github.com/franleal/tpi-contratistas-rurales.git
    cd tpi-contratistas-rurales
    ```
+
+   Para verificar un PR antes del merge, cambiar a su rama antes de continuar.
 
 2. Crear el archivo local de variables:
 
@@ -182,15 +184,42 @@ docker compose logs --tail 80 gateway
 
 Cambiar `.env` después de la primera inicialización **no cambia automáticamente las contraseñas de los roles ya creados dentro de PostgreSQL**. Reconciliar las credenciales existentes si hace falta cambiarlas.
 
-## Ejecutar desde IntelliJ (alternativa de desarrollo)
+## Ejecutar desde IntelliJ (desarrollo local)
 
-El flujo recomendado para comprobar el entorno compartido es Docker Compose. Para ejecutar las aplicaciones Java individualmente desde IntelliJ:
+1. Preparar `.env` con el paso 2 de [Primer arranque](#primer-arranque-windows--powershell). Si está corriendo el Compose completo, detenerlo primero con `docker compose down` para liberar el puerto `8080` y conservar los datos. Levantar PostgreSQL y Keycloak desde la raíz del repositorio:
 
-- Usar JDK 21 y ejecutar las clases `*Application` desde su módulo Maven correcto.
-- En cada Run Configuration de los microservicios, asignar `DB_PASSWORD` a la contraseña de su propio esquema; usar `-Duser.timezone=America/Argentina/Buenos_Aires` en **VM options**.
-- Los puertos locales establecidos son `8082` (`ms-campos`), `8083` (`ms-contratistas`), `8084` (`ms-trabajos`) y `8080` (Gateway).
-- La configuración **Docker Compose completa no publica PostgreSQL en el host**. Para ejecutar Java localmente será necesario habilitar temporalmente una conexión a PostgreSQL desde el host, sin cambiar el diseño final de la red.
-- Detener el Gateway de IntelliJ antes de levantar el Gateway en Docker: ambos ocuparían el puerto 8080.
+   ```powershell
+   docker compose up -d postgres keycloak
+   docker compose ps
+   ```
+
+   Esperar a que PostgreSQL figure como `healthy` y que Keycloak responda en `http://localhost:8081`. El puerto local `5432` tiene que estar libre.
+
+2. Abrir la raíz del repositorio en IntelliJ, elegir **JDK 21** en **File → Project Structure → Project** y agregar los `pom.xml` de `agro-commons`, `api-gateway`, `ms-campos`, `ms-contratistas` y `ms-trabajos` desde la ventana **Maven → Add Maven Project**.
+3. Instalar `agro-commons` en el repositorio Maven local con **Maven → agro-commons → Lifecycle → install** y luego recargar los proyectos Maven. Los tres microservicios usan `ar.edu.tpi:agro-commons:1.0.0`. Como alternativa al paso `install` de IntelliJ, desde PowerShell con JDK 21:
+
+   ```powershell
+   .\api-gateway\mvnw.cmd -f .\agro-commons\pom.xml install
+   ```
+
+4. Crear una configuración de ejecución para cada clase `*Application`. En **Run → Edit Configurations**, usar `-Duser.timezone=America/Argentina/Buenos_Aires` en **VM options** y copiar la contraseña correspondiente del `.env` a `DB_PASSWORD` en **Environment variables**. Compose lee `.env` desde la raíz y las configuraciones de IntelliJ se completan por separado.
+
+   | Clase | Puerto | Valor para `DB_PASSWORD` |
+   | --- | ---: | --- |
+   | `MsCamposApplication` | `8082` | `CAMPOS_DB_PASSWORD` |
+   | `MsContratistasApplication` | `8083` | `CONTRATISTAS_DB_PASSWORD` |
+   | `MsTrabajosApplication` | `8084` | `TRABAJOS_DB_PASSWORD` |
+   | `ApiGatewayApplication` | `8080` | — |
+
+   Los tres servicios tienen `localhost:5432` como destino por defecto. Cada uno ya define su propio esquema y usuario de base.
+
+5. Ejecutar el microservicio desde IntelliJ y comprobar `/actuator/health` en su puerto. Por ejemplo, para `ms-campos`:
+
+   ```powershell
+   curl.exe -s -i http://localhost:8082/actuator/health
+   ```
+
+   El resultado esperado es `HTTP 200` con `{"status":"UP"}`. Para cerrar el entorno local, detener las aplicaciones en IntelliJ y ejecutar `docker compose down`.
 
 ## Estructura principal
 
@@ -216,9 +245,34 @@ docker-compose.yml       # Orquestación de los seis contenedores
 - Autorización por **rol y método HTTP** en el Gateway (`401` sin token y `403` cuando el rol sea insuficiente).
 - Validación del JWT también en **cada microservicio**, y control de propiedad con el `sub` del token.
 - Implementación de entidades, DTOs, controladores, servicios, reglas RN-01 a RN-17, integraciones externas, errores comunes y pruebas.
+- Retirar el material de claves del export de Keycloak y comprobar que el realm genere claves propias en una instalación nueva (**SEG-01**).
+- Publicar PostgreSQL únicamente al iniciar el modo IntelliJ (**INF-01**, *Trusted zone* del enunciado).
 - Verificación del arranque **desde un entorno limpio** por otro integrante del equipo. La importación inicial del realm no se probó todavía sobre una segunda instalación vacía.
 
 Los endpoints `/internal/**` son solo para llamadas entre microservicios autenticadas y **no deben enrutarse públicamente** en el Gateway. Ningún microservicio debe depender de entidades JPA, DTOs de negocio o reglas internas de otro servicio.
+
+## Equipo de cinco
+
+1. Responsable ms-campos
+2. Responsable ms-contratistas
+3. Responsable ms-trabajos A: órdenes, agrónomos, recetas, postulaciones
+4. Responsable infraestructura: Gateway, Keycloak, Compose, PostgreSQL, commons
+5. Responsable ms-trabajos B: Open-Meteo, ventana climática, agenda, ejecución e integración
+
+## Trabajo en equipo y pull requests
+
+- Una rama por tarea: `feature/<area>-<tarea>`.
+- Proponer cada cambio mediante PR hacia `main`; no hacer push directo.
+- Revisión cruzada y aprobación final por `@franleal` antes del merge.
+- Sin merges automáticos.
+- Cada PR indica la regla RN cuando corresponda, el criterio de rúbrica, la justificación, cómo se probó y los riesgos.
+
+## Fallas obligatorias
+
+- Postulación sin Open-Meteo o ms-contratistas: responder 503 sin guardarla.
+- Lote sin clasificar por falla de Georef: responder 503 sin guardarlo.
+- Ejecución sin consulta climática: registrar ejecución con clima NO_DISPONIBLE.
+- Reserva de agenda confirmada seguida de falla local: compensar liberándola.
 
 ## Referencias de evaluación
 
