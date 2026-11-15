@@ -14,9 +14,6 @@ services:
       TRABAJOS_DB_PASSWORD: ${TRABAJOS_DB_PASSWORD}
       KC_DB_PASSWORD: ${KC_DB_PASSWORD}
 
-    ports:
-      - "127.0.0.1:5432:5432"
-
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./infra/db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -26,6 +23,130 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+    networks:
+      - interna
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.4.0
+    container_name: agro-keycloak
+    command: start-dev --import-realm
+
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/postgres
+      KC_DB_SCHEMA: keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: ${KC_DB_PASSWORD}
+
+      KC_HOSTNAME: http://localhost:8081
+
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+
+    ports:
+      - "127.0.0.1:8081:8080"
+
+    volumes:
+      - ./keycloak/agro-realm.json:/opt/keycloak/data/import/agro-realm.json:ro
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - interna
+
+  ms-campos:
+    build:
+      context: .
+      dockerfile: ms-campos/Dockerfile
+
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=campos
+      DB_USER: campos_app
+      DB_PASSWORD: ${CAMPOS_DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - interna
+
+  ms-contratistas:
+    build:
+      context: .
+      dockerfile: ms-contratistas/Dockerfile
+
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=contratistas
+      DB_USER: contratistas_app
+      DB_PASSWORD: ${CONTRATISTAS_DB_PASSWORD}
+      JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - interna
+
+  ms-trabajos:
+    build:
+      context: .
+      dockerfile: ms-trabajos/Dockerfile
+
+    environment:
+      SERVER_PORT: 8080
+      DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=trabajos
+      DB_USER: trabajos_app
+      DB_PASSWORD: ${TRABAJOS_DB_PASSWORD}
+
+      CAMPOS_URL: http://ms-campos:8080
+      CONTRATISTAS_URL: http://ms-contratistas:8080
+
+      JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    networks:
+      - interna
+
+  gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+
+    environment:
+      SERVER_PORT: 8080
+
+      CAMPOS_URL: http://ms-campos:8080
+      CONTRATISTAS_URL: http://ms-contratistas:8080
+      TRABAJOS_URL: http://ms-trabajos:8080
+
+      JWT_ISSUER_URI: http://localhost:8081/realms/agro
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/agro/protocol/openid-connect/certs
+
+      JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+    depends_on:
+      keycloak:
+        condition: service_started
+      ms-campos:
+        condition: service_started
+      ms-contratistas:
+        condition: service_started
+      ms-trabajos:
+        condition: service_started
 
     networks:
       - interna
