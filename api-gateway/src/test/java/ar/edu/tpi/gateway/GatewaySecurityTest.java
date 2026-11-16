@@ -32,7 +32,14 @@ class GatewaySecurityTest {
         client.post().uri("/api/lotes").exchange()
                 .expectStatus().isUnauthorized()
                 .expectHeader().valueEquals("WWW-Authenticate", "Bearer")
+                .expectHeader().exists("X-Correlation-Id")
                 .expectBody().jsonPath("$.codigo").isEqualTo("NO_AUTENTICADO");
+    }
+
+    @Test
+    void respetaElCorrelationIdDelCliente() {
+        client.get().uri("/actuator/health").header("X-Correlation-Id", "prueba-123").exchange()
+                .expectHeader().valueEquals("X-Correlation-Id", "prueba-123");
     }
 
     @Test
