@@ -1,0 +1,16 @@
+@startuml estados-orden
+title Estados de una orden de pulverización
+[*] --> RECETA_PENDIENTE : F-10 crear orden\n[lote fuera de zona de exclusión]
+RECETA_PENDIENTE --> ABIERTA : F-11 firmar receta\n[RN-01, RN-07]
+ABIERTA --> ABIERTA : F-13 postulación válida\n[RN-02..RN-04, RN-09..RN-13]
+ABIERTA --> ASIGNADA : F-15 asignar\n[reserva de agenda OK]
+ASIGNADA --> EJECUTADA : F-16 registrar ejecución\n[RN-15, RN-16]
+EJECUTADA --> COMPLETADA : F-17 confirmar\n[RN-17]
+COMPLETADA --> [*]
+note right of RECETA_PENDIENTE
+  Si el lote está en zona de exclusión
+  la orden no se crea (422).
+  Toda transición desde un estado
+  que no corresponde responde 409 (RN-18).
+end note
+@enduml

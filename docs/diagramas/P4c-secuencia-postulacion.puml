@@ -1,0 +1,51 @@
+@startuml secuencia-postulacion
+title Secuencia - Postulación y asignación (colaboración entre servicios)
+autonumber
+actor Contratista
+actor Productor
+participant "API Gateway" as GW
+participant "ms-trabajos" as TR
+participant "ms-contratistas" as CO
+participant "Open-Meteo" as OM
+database "esquema trabajos" as DB
+== Postulación (F-13) ==
+Contratista -> GW : POST /api/ordenes/{id}/postulaciones\n{maquinaId, aplicadorId, inicio, precioHa} + JWT
+GW -> GW : valida JWT y rol CONTRATISTA
+GW -> TR : reenvía con el mismo Authorization
+TR -> TR : orden ABIERTA y inicio dentro del horizonte\ny antes de la fecha límite (RN-10)
+TR -> CO : GET /internal/maquinas/{id}/habilitacion?aplicadorId&fecha\n(JWT propagado)
+CO --> TR : habilitado, motivo, rendimiento, base (RN-02..RN-04)
+TR -> TR : horas = superficie / rendimiento;\ntraslado = Haversine x factor / velocidad (RN-11, RN-12)
+TR -> CO : GET /internal/maquinas/{id}/disponibilidad?desde&hasta
+CO --> TR : libre sí/no (RN-13)
+TR -> OM : GET /v1/forecast (horas de aplicación)
+OM --> TR : viento, ráfagas, lluvia, temperatura, humedad por hora
+TR -> TR : todas las horas cumplen los umbrales (RN-09)
+alt Open-Meteo o ms-contratistas no responden / respuesta inválida
+  TR --> Contratista : 503 (no se registra: falla segura)
+else alguna regla falla
+  TR --> Contratista : 422 con el motivo
+else todo OK
+  TR -> DB : guarda postulación VALIDA
+  TR --> Contratista : 201 Created
+end
+== Asignación (F-15) ==
+Productor -> GW : POST /api/ordenes/{id}/asignacion {postulacionId} + JWT
+GW -> TR : rol PRODUCTOR
+TR -> TR : la orden es del productor (sub) y está ABIERTA
+TR -> CO : GET /internal/maquinas/{id}/habilitacion (revalida RN-04)
+TR -> CO : POST /internal/agenda/reservas {maquinaId, ordenId, desde, hasta}
+alt bloque ya reservado
+  CO --> TR : 409
+  TR --> Productor : 409, la orden sigue ABIERTA
+else reserva creada
+  CO --> TR : 201 {reservaId}
+  TR -> DB : guarda asignación y orden ASIGNADA
+  alt falla el guardado local
+    TR -> CO : DELETE /internal/agenda/reservas/{reservaId} (compensación)
+    TR --> Productor : 503, la orden sigue ABIERTA
+  else OK
+    TR --> Productor : 200, orden ASIGNADA
+  end
+end
+@enduml

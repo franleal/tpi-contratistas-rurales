@@ -1,0 +1,22 @@
+@startuml c1-contexto
+!include <C4/C4_Context>
+LAYOUT_TOP_DOWN()
+title C1 - Diagrama de Contexto - Plataforma de Contratistas Rurales
+Person(productor, "Productor", "Registra establecimientos y lotes, crea órdenes de pulverización, elige postulaciones y confirma el trabajo.")
+Person(contratista, "Contratista", "Registra máquinas, aplicadores, habilitaciones y disponibilidad; se postula y registra la ejecución.")
+Person(agronomo, "Agrónomo", "Registra su matrícula y firma la receta agronómica de cada orden.")
+Person(admin, "Administrador", "Aprueba habilitaciones y matrículas; configura umbrales climáticos y parámetros de zona.")
+System(plataforma, "Plataforma de Contratistas Rurales", "Backend que gestiona la pulverización terrestre de punta a punta: habilitaciones, zonas sensibles, ventana climática, agenda y cierre.")
+System_Ext(keycloak, "Keycloak", "Identity Provider: OIDC, roles y emisión de JWT.")
+System_Ext(meteo, "Open-Meteo", "API pública de pronóstico horario y clima de horas pasadas.")
+System_Ext(georef, "Georef Argentina", "API pública de unidades territoriales y localidades.")
+Rel(productor, plataforma, "Gestiona lotes y órdenes, elige postulación, confirma", "HTTPS/JSON + JWT")
+Rel(contratista, plataforma, "Gestiona recursos, se postula, registra ejecución", "HTTPS/JSON + JWT")
+Rel(agronomo, plataforma, "Registra matrícula y firma recetas", "HTTPS/JSON + JWT")
+Rel(admin, plataforma, "Valida habilitaciones y configura parámetros", "HTTPS/JSON + JWT")
+Rel_U(productor, keycloak, "Inician sesión (los cuatro actores)", "OIDC")
+Rel(plataforma, keycloak, "Valida firmas de los tokens", "JWKS")
+Rel(plataforma, meteo, "Consulta pronóstico y clima real", "HTTPS/JSON")
+Rel(plataforma, georef, "Ubica el lote y obtiene localidades", "HTTPS/JSON")
+SHOW_LEGEND()
+@enduml
