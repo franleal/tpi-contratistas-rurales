@@ -2,7 +2,7 @@
 
 Backend de Aplicaciones — UTN FRC. Proyecto de backend basado en microservicios para la gestión de contratistas rurales.
 
-> **Estado:** configuración inicial de infraestructura. Los servicios arrancan, pero las funcionalidades de negocio y la autorización completa todavía están pendientes. Entorno de **desarrollo local**, no apto para producción.
+> **Estado:** funcionalidades F-01 a F-17 y reglas RN-01 a RN-18 implementadas con pruebas automatizadas. Entorno de **desarrollo local**, no apto para producción.
 
 ## Stack
 
@@ -156,10 +156,10 @@ Esperado: `401 Unauthorized` con `WWW-Authenticate: Bearer`.
 
 ### 3. Obtener un JWT de prueba
 
-En PowerShell, con un usuario previamente creado en `agro` (ejemplo: `productor_test`):
+En PowerShell, con uno de los usuarios de prueba del realm (ejemplo: `productor1`):
 
 ```powershell
-$credencial = Get-Credential -UserName "productor_test" -Message "Contraseña de Keycloak"
+$credencial = Get-Credential -UserName "productor1" -Message "Contraseña de Keycloak"
 
 $respuesta = Invoke-RestMethod `
     -Method Post `
@@ -186,7 +186,7 @@ En la **misma sesión de PowerShell**:
 curl.exe -s -i -H "Authorization: Bearer $token" "http://localhost:8080/api/lotes/15"
 ```
 
-**Estado actual:** el Gateway valida el JWT y reenvía la petición a `ms-campos`, que todavía puede responder `401` con `WWW-Authenticate: Basic realm="Realm"`, debido a que aún no tiene configurado su Resource Server. **Ese `401` no equivale a una funcionalidad de lotes implementada.** Los controladores y reglas de negocio siguen pendientes.
+Esperado: `200` con el lote 15 si pertenece a `productor1`, `404` si no existe y `403` si es de otro productor. Con los datos de demostración, probar con `/api/lotes/1` (propio) y `/api/lotes/4` (de `productor2`).
 
 Si el Gateway responde `invalid_token`/`Bearer token is malformed`, verificar que `$token` esté definido en esa sesión y obtener otro si expiró. Si rechaza un token bien formado, revisar los logs y la coherencia entre el `iss` público (`http://localhost:8081/realms/agro`) y el JWKS interno de Docker.
 
@@ -265,25 +265,73 @@ ms-contratistas/         # Dominio de contratistas
 ms-trabajos/             # Dominio de trabajos
 agro-commons/            # Utilidades técnicas compartidas
 infra/db/init.sql        # Creación inicial de usuarios/esquemas
-keycloak/agro-realm.json # Configuración inicial del realm, sin usuarios
-docs/                    # Contratos y decisiones
+keycloak/agro-realm.json # Realm agro con roles y usuarios de prueba
+docs/                    # Contratos, decisiones, errores, modelo de datos y diagramas
+postman/                 # Colección y entorno de Postman
 .env.example             # Plantilla de configuración sin secretos
 docker-compose.yml       # Orquestación de los seis contenedores
 ```
 
-## Estado y próximos desarrollos
+## Endpoints por el Gateway
 
-**Preparado y probado en el entorno del equipo:** compilación de proyectos, PostgreSQL con esquemas independientes, Keycloak con realm y roles, emisión de JWT, Gateway con rutas y validación básica de JWT, y levantamiento conjunto en Docker Compose.
+Todas las rutas requieren `Authorization: Bearer <token>`. El Gateway controla el rol (`401` sin token, `403` con rol insuficiente) y cada microservicio vuelve a validar el JWT y la propiedad con el `sub` (`403` si el recurso es de otro usuario). Los errores siguen el formato común de `docs/ERRORES.md`.
 
-**Pendiente (obligatorio antes de considerar funcional el backend):**
+| Método y ruta | Rol | Funcionalidad / reglas |
+| --- | --- | --- |
+| `POST /api/establecimientos`, `GET /api/establecimientos` | PRODUCTOR | F-02 |
+| `POST /api/lotes`, `GET /api/lotes/{id}` | PRODUCTOR | F-03, RN-08 (Georef; `503` sin guardar si falla) |
+| `GET /api/admin/zonas`, `PUT /api/admin/zonas/{provincia}` | ADMIN | Parámetros de zona por provincia |
+| `POST /api/contratistas`, `GET /api/contratistas/me` | CONTRATISTA | F-04 |
+| `POST /api/maquinas`, `GET /api/maquinas` | CONTRATISTA | F-05 |
+| `POST /api/aplicadores`, `GET /api/aplicadores` | CONTRATISTA | F-05 |
+| `POST /api/habilitaciones` | CONTRATISTA | F-06, RN-02 a RN-04 |
+| `GET /api/admin/habilitaciones?estado=`, `POST …/{id}/aprobar`, `POST …/{id}/rechazar` | ADMIN | F-08 |
+| `POST /api/agenda/bloques`, `GET /api/agenda/bloques?maquinaId=` | CONTRATISTA | F-09, RN-05 |
+| `POST /api/agronomos`, `GET /api/agronomos/me` | AGRONOMO | F-07 |
+| `GET /api/admin/matriculas?estado=`, `POST …/{id}/aprobar`, `POST …/{id}/rechazar` | ADMIN | F-08 |
+| `GET /api/admin/umbrales`, `PUT /api/admin/umbrales` | ADMIN | Umbrales climáticos (RN-09) |
+| `POST /api/ordenes` | PRODUCTOR | F-10, RN-06 |
+| `GET /api/ordenes?estado=`, `GET /api/ordenes/{id}` | PRODUCTOR, AGRONOMO, CONTRATISTA | Consulta según rol |
+| `POST /api/ordenes/{id}/receta` | AGRONOMO | F-11, RN-01, RN-07 |
+| `GET /api/ordenes/{id}/ventanas` | PRODUCTOR, CONTRATISTA | F-12, RN-09 (Open-Meteo) |
+| `POST /api/ordenes/{id}/postulaciones` | CONTRATISTA | F-13, RN-02 a RN-05, RN-09 a RN-13 |
+| `GET /api/ordenes/{id}/postulaciones` | PRODUCTOR | F-14, RN-14 |
+| `POST /api/ordenes/{id}/asignacion` | PRODUCTOR | F-15 (reserva de agenda con compensación) |
+| `POST /api/ordenes/{id}/ejecucion` | CONTRATISTA | F-16, RN-15, RN-16 |
+| `POST /api/ordenes/{id}/confirmacion` | PRODUCTOR | F-17, RN-17 |
 
-- Autorización por **rol y método HTTP** en el Gateway (`401` sin token y `403` cuando el rol sea insuficiente).
-- Validación del JWT también en **cada microservicio**, y control de propiedad con el `sub` del token.
-- Implementación de entidades, DTOs, controladores, servicios, reglas RN-01 a RN-17, integraciones externas, errores comunes y pruebas.
-- Retirar el material de claves del export de Keycloak y comprobar que el realm genere claves propias en una instalación nueva (**SEG-01**).
-- Verificación del arranque **desde un entorno limpio** por otro integrante del equipo. La importación inicial del realm no se probó todavía sobre una segunda instalación vacía.
+Las rutas `/internal/**` (contratos en `docs/CONTRATOS.md`) solo se usan entre microservicios y el Gateway no las publica.
 
-Los endpoints `/internal/**` son solo para llamadas entre microservicios autenticadas y **no deben enrutarse públicamente** en el Gateway. Ningún microservicio debe depender de entidades JPA, DTOs de negocio o reglas internas de otro servicio.
+## Documentación OpenAPI (Swagger)
+
+Swagger UI unificado en http://localhost:8080/swagger-ui.html: el selector superior cambia entre `ms-campos`, `ms-contratistas` y `ms-trabajos`. Para probar desde ahí, obtener un token (paso 3 de *Pruebas rápidas*) y cargarlo con **Authorize**. Cada servicio también publica `/v3/api-docs` en su puerto cuando se ejecuta desde IntelliJ.
+
+## Colección Postman
+
+En `postman/` están la colección `tpi-contratistas.postman_collection.json` y el entorno `tpi-local.postman_environment.json`. Importar ambos, cargar la contraseña de demostración en la variable `password` del entorno y ejecutar primero la carpeta **0. Tokens**. La carpeta **1. Caso de uso principal** recorre orden → receta → ventanas → postulación → asignación con los datos de demostración; la **2** muestra los rechazos por regla y por seguridad.
+
+## Datos de demostración
+
+Cada servicio carga su `data.sql` en cada arranque, con fechas relativas al día en que se levanta:
+
+- **ms-campos:** lote 1 *LIBRE*, lote 2 *AMORTIGUAMIENTO* y lote 3 *EXCLUSION* de `productor1`; lote 4 de `productor2`; parámetros de zona por provincia.
+- **ms-contratistas:** `contratista1` con máquina 1 y aplicador 1 habilitados por un año; `contratista2` con máquina 2, aplicador 2 cuyo carnet **vence a los 2 días** (RN-02) y aplicador 3 con carnet **pendiente** de validación; disponibilidad de ambas máquinas de mañana a 7 días.
+- **ms-trabajos:** umbrales climáticos; `agronomo1` con matrícula validada y `agronomo2` pendiente (RN-01).
+
+Con la base recién creada los ids son los indicados. Para volver al estado inicial: `docker compose down -v` y levantar de nuevo.
+
+## Pruebas automatizadas
+
+```powershell
+.\mvnw.cmd test
+```
+
+Las pruebas usan H2 en modo PostgreSQL y simulan Keycloak, Georef, Open-Meteo y los otros microservicios, así que no requieren Docker ni red. Entre ellas: transiciones de estado (RN-18), concurrencia de reservas, falla segura con dependencias caídas (`FallaSeguraTest`, `FalloSeguroGeorefTest`), compensación de reservas (`CompensacionIntegracionTest`) y el flujo completo de la orden (`FlujoCompletoTest`).
+
+## Pendiente
+
+- Verificar el arranque con Docker Compose **desde un entorno limpio** en otra PC del equipo (incluida la importación del realm).
+- Ejecutar la colección Postman contra el entorno levantado; los pasos que usan Open-Meteo dependen del pronóstico real.
 
 ## Equipo de cinco
 
@@ -311,7 +359,7 @@ Los endpoints `/internal/**` son solo para llamadas entre microservicios autenti
 ## Referencias de evaluación
 
 - **ARQ-01:** estructura y límites de microservicios, Gateway y comunicación.
-- **SEG-01:** identidad y seguridad; configuración inicial parcial, controles de roles y propiedad pendientes.
+- **SEG-01:** identidad y seguridad; roles por ruta y método en el Gateway, JWT y propiedad por `sub` en cada servicio.
 - **INF-01:** persistencia, configuración y despliegue reproducible; falta la prueba independiente sobre una instalación limpia.
 
 Documentación principal: *TPI Backend: Contratistas rurales* y *Rúbrica General TPI 2026*, disponibles en los materiales del proyecto.
