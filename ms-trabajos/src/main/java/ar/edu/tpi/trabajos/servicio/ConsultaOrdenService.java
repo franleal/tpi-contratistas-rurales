@@ -64,10 +64,24 @@ public class ConsultaOrdenService {
                 .sorted((a, b) -> Long.compare(b.getId(), a.getId()));
     }
 
+    /**
+     * SEG-01: el detalle aplica la misma visibilidad que el listado. El contratista solo ve las
+     * órdenes ABIERTAS o las que tiene asignadas; cualquier otra responde 403.
+     */
     @Transactional(readOnly = true)
     public OrdenDetalleResponse detalle(Long id) {
         OrdenTrabajo o = CurrentUser.tieneRol("PRODUCTOR") ? ordenService.propia(id) : ordenService.buscar(id);
+        if (CurrentUser.tieneRol("CONTRATISTA") && !visibleParaContratista(o, CurrentUser.sub())) {
+            throw new AccesoRecursoException("La orden " + id + " no está abierta ni asignada al contratista");
+        }
         return detalleDe(o);
+    }
+
+    private boolean visibleParaContratista(OrdenTrabajo o, String sub) {
+        return o.getEstado() == EstadoOrden.ABIERTA
+                || asignaciones.findByOrdenId(o.getId())
+                .map(a -> sub.equals(a.getPostulacion().getContratistaSub()))
+                .orElse(false);
     }
 
     /** Arma el detalle completo de una orden ya autorizada. */
