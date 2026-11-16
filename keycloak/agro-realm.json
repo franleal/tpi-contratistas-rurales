@@ -1372,51 +1372,6 @@
       "subType" : "anonymous",
       "subComponents" : { },
       "config" : { }
-    } ],
-    "org.keycloak.keys.KeyProvider" : [ {
-      "id" : "02a9d936-be37-4e3a-83b1-f5bb774c33da",
-      "name" : "rsa-generated",
-      "providerId" : "rsa-generated",
-      "subComponents" : { },
-      "config" : {
-        "privateKey" : [ "MIIEowIBAAKCAQEAlSKL1o8D8X8YJBEjS5A6OEgSf02n8str1H1WDMO7S9XfsqRFhm5wQgTiSchiBX8V/3bTn0Y4tRj+tExpnIN91gJacbcdNihH0Fvpo2vbutaqTK3gSDb0lj+O8KNGgcgM2XOEcRtFMFd+f2JcjG7GRJ7vWHtFEzzsrvYDhdhb9mgzLjhT89BEyR3ev3yUdKLvxA4iNlsHsQJRF/Fs/WSHbgEJk9gYWPCha6yNEkxS+fU0fBdNoEk9EsHapaBbbA0NKN3k6xKf//AyUWRoUruod7IqstOxlNq4R3YUSQ2nOBijRHNrDEtO5u/IbpJwHjg7ZBNHJ2rFyAJmniSfqCEBpQIDAQABAoIBACjzRPmj6J3J28ufhxULI+lrZOTe4nSJRfEhf1ze7BGNRzEK6WpZ7eo65BYFd2Dx/gzZSI+uHQkhNWM1rjRDaOy4VbRu5w8FbX65lkSA6+N4aWfHwNOjf3K4Phw2gThGwbx9+0qBhfSZucrpq+cFzdxu1eLyaku3iXgbZmk8uTfGBn+ovdU9HprmDj+rnph7mldYhA//cs/t4xJb1VAu9LNslsmVQC46aKvolLfOWqWW7eDjzRXTkZZs89SbQaUAh6619P62gsfHvMh9Eb5PjBsUmt6GjsMBlp1NArRcQXeKi+09oSRb9JWVmbICnA6aEwUvbirvx8Q2RkKsfcJnQrsCgYEAzegN7i2BVY94XxVS6QBiYXP22syAVc0m7kppdbh/zd+OShjKlMXtDeoT2VMrTM5cVo3yN+M58E/JMnW8TBKXA0UjmloD2xA5gpO1nneVW/oWW5WEynWvRvrg1AysCR1ECMoam27P8wp8RhuijaO9L64dqDdv/HRTLADMTVzjaLMCgYEAuWq8lsEYY1B70noTDAY7+ktbFJAxTdsrV4hUx3Lsm4jeG16hD1tpRxhWHAXt/zUkPME3oOojmewcmEKuj3LsOUlTg6NWdc73MxHzhi+MCR9nC90jAx/RsL9pZl6xyEXc/0GgwJ8REIrMuquzmhvgmhJSLtcV06XWeJ5Q3jwBKEcCgYA7CC1+PHOY+RH0iKOFg4OxFtMN9ZVRhAiGRrUnd+bEOjSMD8F8l6YX2CUqqEqAsaUNd5Ka7T0+JVG0csayNJ4w5NCJPwdd9a/XPMvUC8q5XOCuDxbMCKNgwSpWAPANiONpda/dIg7iSf5JB0E6RFhH5C5CfOpRQXRa6DuqblgQOwKBgGY9FbomxTTWB0C6sU/7DA1qidFf5N/iTxbYBK9pjlAA+z+qQTL/m6BpKeoP1vjXK6EYhX0EPhc8m1PVyP0uSFUaOqOmaCFTuvj9GAPQqe3J0/81s32giPZlxU9+PZeJ9l8FqAcubrFpZ5Qy4zjB0GoEWi6byNxIYGdoHH0+JwE3AoGBAK66HFLCGUPJU1QrPVvWRxS0w6p+XZxu3f0esq44FqQ1xnAWKAx0SnH0eCnKlP88TwLDQFzj/pJviX0052yK9cx1ZAjxHnXuduQGiakYPjqVEf1f0n7dbkTswTwurMsK/wRxTUDVY3EIVurLYDTtOrotqhFxfnAFGoBuydQ9N+Bn" ],
-        "keyUse" : [ "SIG" ],
-        "certificate" : [ "MIIClzCCAX8CBgGhx2AJ2jANBgkqhkiG9w0BAQsFADAPMQ0wCwYDVQQDDARhZ3JvMB4XDTI2MTExMDIxMzAyMloXDTM2MTExMDIxMzIwMlowDzENMAsGA1UEAwwEYWdybzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJUii9aPA/F/GCQRI0uQOjhIEn9Np/LLa9R9VgzDu0vV37KkRYZucEIE4knIYgV/Ff92059GOLUY/rRMaZyDfdYCWnG3HTYoR9Bb6aNr27rWqkyt4Eg29JY/jvCjRoHIDNlzhHEbRTBXfn9iXIxuxkSe71h7RRM87K72A4XYW/ZoMy44U/PQRMkd3r98lHSi78QOIjZbB7ECURfxbP1kh24BCZPYGFjwoWusjRJMUvn1NHwXTaBJPRLB2qWgW2wNDSjd5OsSn//wMlFkaFK7qHeyKrLTsZTauEd2FEkNpzgYo0RzawxLTubvyG6ScB44O2QTRydqxcgCZp4kn6ghAaUCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAcJtmNLsJ9wGEPSQ+/I9ey0pUZq9ThAjv3tWXPKhwypc4vyTGoqvoSo+93AJecsVQj7ORvo26V/phlL9O5NQgJAAhkvWybZY5vrQ02aC0orUYV8owyLYSk9299thOYxvGTOly8MTZMLO9066WSiUBVMEmapiTtqP62+8sF3Syf73kRf/rtZhHZXN5i9smR3f8peucUdbeLrUJrlOYWsIYQ8z2u1bdnXK8hXlcS2OFx7bYUgkyf7OFpEvx2fjmAD/WkanKEYLYmPiT79QV5kU/+LUcjTZaYe3nkvm8qqVPX76CZemD0g4gWkHM6fWifI3CUu3K+AWkq1CvSC6T+kH4lw==" ],
-        "priority" : [ "100" ]
-      }
-    }, {
-      "id" : "97f3c2fa-cf7e-48db-bfe3-14ba186080fe",
-      "name" : "aes-generated",
-      "providerId" : "aes-generated",
-      "subComponents" : { },
-      "config" : {
-        "kid" : [ "b921a77a-0e0d-46c2-ad45-63172da519a2" ],
-        "secret" : [ "eNQdwdOzQQSlgI0S8OMqWQ" ],
-        "priority" : [ "100" ]
-      }
-    }, {
-      "id" : "e365b91c-b5ad-46df-ba5c-bca4305d8d25",
-      "name" : "rsa-enc-generated",
-      "providerId" : "rsa-enc-generated",
-      "subComponents" : { },
-      "config" : {
-        "privateKey" : [ "MIIEowIBAAKCAQEA3RsK4pYWqmsLcwVZzln1uLtQrJUIpoghiPDVNSI8tgaTkywTU+EwBaMFX9HTlpBdVH4jjmly03QWe9lvzHkP1NDEqgkHQCRsYDUmoyNr398j7W7jKgWmmliF99w0HjXTVcXuT7J/cGvJWDd7sQgtqG/UPDK0LHl2KlSHpSuSHnNHN9/QEnWmLYJ0Yk0wAJiCW5WDC2GXHt9HSTejDHkvKPajw+m0RNbzXUkzCbXNwGrTMZOPw5Cvv6IZ+zT2sQjxjEd9ifS3SX4TFdXXtgD+u1iVk4gpTdfQbZqCclkgMX0cN8o8bRx1vSCBc3B1dbP76mkO09lYbHKfDNYOW/vgRQIDAQABAoIBACOA8aUDu7z+tlZwYATSDjJtJZ2oyrxO9K+UGHBRQJVsBetmcu4PpVHqZPUHcOXm5Y2pOZVnGlCY/flCJ4EaWW/vW/z/uSHUF3D1Z/BfQjWvE4pPOXvob2GuYEi2G8pUE0zdHRDAFVWcgTbApgR9zzMSTe6ip6rSkCZo72UW034+8Qu/PPv6uo0/CbBaGNWm6UzdcMngmLg4PtBo0MPpYLDKd3a3ASWIyAZqNFlv3lAnfBd+hhJVpXFsaqdO8fjWgaQZ0sXFeBcN+I9u7tgenEl/0WNrd1BKdPQD0k2TafSCp64o6c5yWZMg4cS4h/cBZp0GhIv04AgKAwsl3cC4BXsCgYEA+dPFIqx8gEa2MoQKQDwBoaYPxydmx/3qFtvH/Zl7V9SgHJRcEDEFy+7IQblAOj9kgAngEeqhDKv3Vp3ptA4caZBMjC6CijQovRnv3i3WFkPUQFF+U2u9K4smkKZXNV7jEHN3PITjKPzmn8SngAcEXg7GslQeyHjo+9SeeMQ3eWMCgYEA4pGZm4A6gB30wBbG87cFd5yhae1DWS+m3oETnWdcKig30mMBLtvz85+jPJCdek0azUAV7V0ShtHkPquGj76bqIGYLiWX6O6ao6ktHGDbaUwgx4/77V08/9R1Xz6ORK/GkizjscxRSQRtME2z6WoH3syiPOleVz+RsAko4aKrxDcCgYBckCQodrQiaxCyos2RgyovlHGgHm8shl2nXoM46RcUMcmpDScXMLKvHqfAAj1T140LC52jxcUqBsU7qIKgneHVEwvpnIntXuoBNozzSxRZZ4RK2GbvzalnasU9LwR8181VmRKCr9Hiq+FfLOPKwc7ScrMX+6b0LChWti6JHFpZdQKBgQDg3UjrAHUPOqvzCagjsn4GnLnG++hf199x7gGdszvRy2C7ue8upraUENhd/9mLzILROs2Ia1s7240AdhRzDeZHc3eqNT1zvXxU+k7/X1HkS94sskaC6orkDeT/xoJEwX//C/ZgPDxgj7gevL/W5ZkyEz7h3Wv4g+sAH9cnOd/oOQKBgBq9ssKPQJj9txi1/6vVD6N7Lf6stJf82GOYOHFSUvvrOX+hmax+MxjMrwGdVF81L5fVeTEQB79oiY3wcyLRiMHtH/ZP4oEeiU6uN+VhS6t6ONS8ZiJ3En3WlVfj5s9mLlllBSJNOhDBI09PWquVuDADifWzQpOEM2voprAyZmgh" ],
-        "keyUse" : [ "ENC" ],
-        "certificate" : [ "MIIClzCCAX8CBgGhx2AKgjANBgkqhkiG9w0BAQsFADAPMQ0wCwYDVQQDDARhZ3JvMB4XDTI2MTExMDIxMzAyMloXDTM2MTExMDIxMzIwMlowDzENMAsGA1UEAwwEYWdybzCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAN0bCuKWFqprC3MFWc5Z9bi7UKyVCKaIIYjw1TUiPLYGk5MsE1PhMAWjBV/R05aQXVR+I45pctN0FnvZb8x5D9TQxKoJB0AkbGA1JqMja9/fI+1u4yoFpppYhffcNB4101XF7k+yf3BryVg3e7EILahv1DwytCx5dipUh6Urkh5zRzff0BJ1pi2CdGJNMACYgluVgwthlx7fR0k3owx5Lyj2o8PptETW811JMwm1zcBq0zGTj8OQr7+iGfs09rEI8YxHfYn0t0l+ExXV17YA/rtYlZOIKU3X0G2agnJZIDF9HDfKPG0cdb0ggXNwdXWz++ppDtPZWGxynwzWDlv74EUCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEAgxH80u63lmbqtMfiiIFOBwYxVH+Eo9nOWSyT88WHoa63NRc5ZTOKQu0c1aA0SYBBqgC5liD6EXJZQYmsaeLnN7iERmLl0vSG4xdLc7UdwUvOgH9m+ciODSAtwHnELx5Uy5H+L3ifpNBPK5pxZq2EzrlndWM6UpWyQQJ8uqr3iVZXTpJEb6Jc0FvSPWUQedRgKoY/+WbCAdjaoJZTeCIe7QPPK1h5uZUcywQJRq9ntyDqTO/ALhZyB9TleaTarm19No/3CX2p81hZXoYEKgXLm2le5mb6ui9e6kUoiUnFc6ro2jkeqYP1tK9CQkTddwzzYzolo+DB2qe45ptQC9oYnQ==" ],
-        "priority" : [ "100" ],
-        "algorithm" : [ "RSA-OAEP" ]
-      }
-    }, {
-      "id" : "6b38934a-c265-48d1-81ca-2470ba807755",
-      "name" : "hmac-generated-hs512",
-      "providerId" : "hmac-generated",
-      "subComponents" : { },
-      "config" : {
-        "kid" : [ "e80b0cfd-995c-40c6-a92b-ca05271b561a" ],
-        "secret" : [ "__b6AtYpUZQFxc8EVmYXbXuXPELJcWviqEikXb50Fm75m7uAj82M8avLtkWwOpdlIgEkWNaYHwOecLCcINL78-hONIqQfgc2oQ5-atg-HoPN-RKsJAjMlabYkcsYa8Y3TUbrFyxdaM8j2ilJgJnEhnM1KxYgAcTwQ7J5KehfVbU" ],
-        "priority" : [ "100" ],
-        "algorithm" : [ "HS512" ]
-      }
     } ]
   },
   "internationalizationEnabled" : false,
