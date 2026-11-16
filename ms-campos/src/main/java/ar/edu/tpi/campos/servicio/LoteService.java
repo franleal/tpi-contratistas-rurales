@@ -10,11 +10,14 @@ import ar.edu.tpi.campos.repositorio.LoteRepository;
 import ar.edu.tpi.campos.servicio.ClasificadorZona.Clasificacion;
 import ar.edu.tpi.campos.web.dto.LoteRequest;
 import ar.edu.tpi.campos.web.dto.LoteResponse;
+import ar.edu.tpi.commons.excepcion.RecursoNoEncontradoException;
 import ar.edu.tpi.commons.excepcion.ReglaNegocioException;
+import ar.edu.tpi.commons.seguridad.CurrentUser;
 import ar.edu.tpi.commons.util.GeoUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -44,6 +47,19 @@ public class LoteService {
         this.parametros = parametros;
         this.georef = georef;
         this.clasificador = clasificador;
+    }
+
+    /** F-02 (consulta): lote propio con su clasificación. 404 si no existe, 403 si es ajeno. */
+    @Transactional(readOnly = true)
+    public LoteResponse consultarPropio(Long id) {
+        Lote lote = buscar(id);
+        CurrentUser.verificarDuenio(lote.getProductorSub(), "el lote " + id);
+        return LoteResponse.de(lote);
+    }
+
+    Lote buscar(Long id) {
+        return lotes.findWithDuenioById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe el lote " + id));
     }
 
     public LoteResponse registrar(LoteRequest req) {

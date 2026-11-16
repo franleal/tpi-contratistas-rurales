@@ -26,6 +26,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -115,6 +116,33 @@ class LoteControllerTest {
         mvc.perform(post("/api/lotes").with(P1).contentType(MediaType.APPLICATION_JSON).content(lote(est, -31.5)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.mensaje").value(org.hamcrest.Matchers.containsString("San Juan")));
+    }
+
+    long crearLote(RequestPostProcessor quien) throws Exception {
+        long est = crearEstablecimiento(quien);
+        String body = mvc.perform(post("/api/lotes").with(quien).contentType(MediaType.APPLICATION_JSON)
+                .content(lote(est, -31.1))).andReturn().getResponse().getContentAsString();
+        return ((Number) JsonPath.read(body, "$.id")).longValue();
+    }
+
+    @Test
+    void consultaLotePropio() throws Exception {
+        long id = crearLote(P1);
+        mvc.perform(get("/api/lotes/" + id).with(P1))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(id))
+                .andExpect(jsonPath("$.zona").value("LIBRE"));
+    }
+
+    @Test
+    void loteAjenoDevuelve403() throws Exception {
+        long id = crearLote(P1);
+        mvc.perform(get("/api/lotes/" + id).with(P2)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void loteInexistenteDevuelve404() throws Exception {
+        mvc.perform(get("/api/lotes/999").with(P1)).andExpect(status().isNotFound());
     }
 
     @Test
