@@ -279,14 +279,14 @@ Todas las rutas requieren `Authorization: Bearer <token>`. El Gateway controla e
 | Método y ruta | Rol | Funcionalidad / reglas |
 | --- | --- | --- |
 | `POST /api/establecimientos`, `GET /api/establecimientos` | PRODUCTOR | F-02 |
-| `POST /api/lotes`, `GET /api/lotes/{id}` | PRODUCTOR | F-03, RN-08 (Georef; `503` sin guardar si falla) |
-| `GET /api/admin/zonas`, `PUT /api/admin/zonas/{provincia}` | ADMIN | Parámetros de zona por provincia |
+| `POST /api/lotes`, `GET /api/lotes/{id}` | PRODUCTOR | F-03, RN-05, RN-08 (Georef; `503` sin guardar si falla) |
+| `GET /api/admin/zonas`, `PUT /api/admin/zonas/{provincia}` | ADMIN | Parámetros de zona por provincia (RN-08) |
 | `POST /api/contratistas`, `GET /api/contratistas/me` | CONTRATISTA | F-04 |
 | `POST /api/maquinas`, `GET /api/maquinas` | CONTRATISTA | F-05 |
 | `POST /api/aplicadores`, `GET /api/aplicadores` | CONTRATISTA | F-05 |
 | `POST /api/habilitaciones` | CONTRATISTA | F-06, RN-02 a RN-04 |
 | `GET /api/admin/habilitaciones?estado=`, `POST …/{id}/aprobar`, `POST …/{id}/rechazar` | ADMIN | F-08 |
-| `POST /api/agenda/bloques`, `GET /api/agenda/bloques?maquinaId=` | CONTRATISTA | F-09, RN-05 |
+| `POST /api/agenda/bloques`, `GET /api/agenda/bloques?maquinaId=` | CONTRATISTA | F-09, RN-13 |
 | `POST /api/agronomos`, `GET /api/agronomos/me` | AGRONOMO | F-07 |
 | `GET /api/admin/matriculas?estado=`, `POST …/{id}/aprobar`, `POST …/{id}/rechazar` | ADMIN | F-08 |
 | `GET /api/admin/umbrales`, `PUT /api/admin/umbrales` | ADMIN | Umbrales climáticos (RN-09) |
@@ -294,7 +294,7 @@ Todas las rutas requieren `Authorization: Bearer <token>`. El Gateway controla e
 | `GET /api/ordenes?estado=`, `GET /api/ordenes/{id}` | PRODUCTOR, AGRONOMO, CONTRATISTA | Consulta según rol |
 | `POST /api/ordenes/{id}/receta` | AGRONOMO | F-11, RN-01, RN-07 |
 | `GET /api/ordenes/{id}/ventanas` | PRODUCTOR, CONTRATISTA | F-12, RN-09 (Open-Meteo) |
-| `POST /api/ordenes/{id}/postulaciones` | CONTRATISTA | F-13, RN-02 a RN-05, RN-09 a RN-13 |
+| `POST /api/ordenes/{id}/postulaciones` | CONTRATISTA | F-13, RN-02 a RN-04, RN-09 a RN-13 |
 | `GET /api/ordenes/{id}/postulaciones` | PRODUCTOR | F-14, RN-14 |
 | `POST /api/ordenes/{id}/asignacion` | PRODUCTOR | F-15 (reserva de agenda con compensación) |
 | `POST /api/ordenes/{id}/ejecucion` | CONTRATISTA | F-16, RN-15, RN-16 |

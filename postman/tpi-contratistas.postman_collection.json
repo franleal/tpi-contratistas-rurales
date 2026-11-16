@@ -637,7 +637,7 @@
               "mode": "raw",
               "raw": "{\n  \"maquinaId\": 1,\n  \"aplicadorId\": 1,\n  \"inicio\": \"{{inicioPostulacion}}\",\n  \"precioHa\": 15000\n}"
             },
-            "description": "F-13: RN-02 a RN-05, RN-09, RN-10 a RN-13."
+            "description": "F-13: RN-02 a RN-04 y RN-09 a RN-13."
           },
           "event": [
             {
@@ -1479,7 +1479,7 @@
               "mode": "raw",
               "raw": "{\n  \"establecimientoId\": 1,\n  \"nombre\": \"Lote Este\",\n  \"lat\": -31.64,\n  \"lon\": -63.92,\n  \"superficieHa\": 45,\n  \"cultivo\": \"Girasol\"\n}"
             },
-            "description": "F-03, RN-08. Responde 503 sin guardar si Georef no está disponible."
+            "description": "F-03, RN-05 y RN-08. Responde 503 sin guardar si Georef no está disponible."
           },
           "event": [
             {
