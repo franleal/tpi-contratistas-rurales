@@ -27,6 +27,11 @@ final class Fixtures {
                 {"razonSocial":"Empresa %s","cuit":"%s"}""".formatted(cuit, cuit));
     }
 
+    static long aplicador(MockMvc mvc, RequestPostProcessor quien, String documento) throws Exception {
+        return id(crear(mvc, quien, "/api/aplicadores", """
+                {"nombre":"Aplicador %s","documento":"%s"}""".formatted(documento, documento)));
+    }
+
     static long maquina(MockMvc mvc, RequestPostProcessor quien) throws Exception {
         return id(crear(mvc, quien, "/api/maquinas", """
                 {"descripcion":"Pulverizadora autopropulsada","anchoM":28,"rendimientoHaH":25,"baseLat":-31.4,"baseLon":-64.18}"""));
