@@ -1,6 +1,8 @@
 package ar.edu.tpi.trabajos.servicio;
 
 import ar.edu.tpi.commons.excepcion.ConflictoEstadoException;
+import ar.edu.tpi.commons.excepcion.DependenciaNoDisponibleException;
+import ar.edu.tpi.commons.excepcion.NegocioException;
 import ar.edu.tpi.commons.excepcion.RecursoNoEncontradoException;
 import ar.edu.tpi.trabajos.cliente.ContratistasClient;
 import ar.edu.tpi.trabajos.dominio.EstadoOrden;
@@ -16,7 +18,7 @@ import org.springframework.stereotype.Service;
 
 /**
  * F-15: revalida habilitaciones (RN-04), reserva la agenda en ms-contratistas (RN-13) y guarda
- * la asignación localmente.
+ * la asignación localmente. Si el guardado local falla, libera la reserva (compensación, D-07).
  */
 @Service
 public class AsignacionService {
@@ -37,6 +39,22 @@ public class AsignacionService {
         this.contratistas = contratistas;
         this.persistencia = persistencia;
         this.consultas = consultas;
+    }
+
+    /**
+     * Compensación: si el guardado local falla después de reservar, se libera la reserva para no
+     * dejar la máquina ocupada por una orden que no quedó asignada. Si la liberación también falla
+     * se registra para resolverlo a mano (la reserva queda identificada por su id).
+     */
+    void compensar(Long ordenId, Long reservaId, RuntimeException causa) {
+        log.warn("Falló el guardado de la asignación de la orden {}: se libera la reserva {} ({})", ordenId,
+                reservaId, causa.getMessage());
+        try {
+            contratistas.liberar(reservaId);
+        } catch (RuntimeException e) {
+            log.error("No se pudo liberar la reserva {} de la orden {}: requiere intervención manual", reservaId,
+                    ordenId, e);
+        }
     }
 
     public OrdenDetalleResponse asignar(Long ordenId, AsignacionRequest req) {
@@ -61,7 +79,17 @@ public class AsignacionService {
         // RN-13: 409 si otra asignación tomó el intervalo mientras tanto
         ContratistasClient.Reserva reserva = contratistas.reservar(p.getMaquinaId(), ordenId, p.getOcupadoDesde(),
                 p.getFin());
-        OrdenTrabajo asignada = persistencia.guardar(ordenId, p.getId(), reserva.id());
+        OrdenTrabajo asignada;
+        try {
+            asignada = persistencia.guardar(ordenId, p.getId(), reserva.id());
+        } catch (RuntimeException e) {
+            compensar(ordenId, reserva.id(), e);
+            if (e instanceof NegocioException negocio) {
+                throw negocio;
+            }
+            throw new DependenciaNoDisponibleException("No se pudo guardar la asignación de la orden " + ordenId
+                    + "; la reserva " + reserva.id() + " fue liberada", e);
+        }
         log.info("Orden {} ASIGNADA a la postulación {} (reserva {})", ordenId, p.getId(), reserva.id());
         return consultas.detalleDe(asignada);
     }
