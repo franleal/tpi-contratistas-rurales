@@ -1,6 +1,7 @@
 package ar.edu.tpi.trabajos;
 
 import ar.edu.tpi.commons.excepcion.DependenciaNoDisponibleException;
+import ar.edu.tpi.trabajos.cliente.OpenMeteoClient;
 import ar.edu.tpi.trabajos.cliente.OpenMeteoClient.HoraClima;
 import ar.edu.tpi.trabajos.dominio.EstadoOrden;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,7 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestClient;
 
 import java.time.LocalDateTime;
 
@@ -19,6 +23,8 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -50,6 +56,30 @@ class FotoClimaTest extends EjecucionBase {
                 .andExpect(jsonPath("$.ejecucion.fotoClima[2].apta").value(false))
                 .andExpect(jsonPath("$.ejecucion.fotoClima[2].motivo", containsString("viento")))
                 .andExpect(jsonPath("$.ejecucion.fotoClima[0].apta").value(true));
+    }
+
+    /**
+     * Trabajo de 08:00 a 10:00 con lluvia sólo de 09:00 a 10:00. Open-Meteo la informa en la marca
+     * 10:00 (hora anterior): la foto de las 09:00 debe reflejarla (RN-16).
+     */
+    @Test
+    void laFotoReflejaLaLluviaInformadaEnLaMarcaSiguiente() throws Exception {
+        RestClient.Builder b = RestClient.builder().baseUrl("http://meteo");
+        MockRestServiceServer server = MockRestServiceServer.bindTo(b).build();
+        server.expect(requestTo(containsString("/v1/forecast"))).andRespond(withSuccess(Climas.openMeteo(
+                INICIO.toString(), new double[]{0, 0, 2.5, 0}, null), MediaType.APPLICATION_JSON));
+        var clima = new OpenMeteoClient(b.build()).horas(0, 0, INICIO.toLocalDate(), INICIO.toLocalDate());
+        when(meteo.horas(anyDouble(), anyDouble(), any(), any())).thenReturn(clima);
+
+        registrar(C1, INICIO, INICIO.plusHours(2), "50")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ejecucion.fueraDeCondiciones").value(true))
+                .andExpect(jsonPath("$.ejecucion.fotoClima", hasSize(2)))
+                .andExpect(jsonPath("$.ejecucion.fotoClima[0].precipitacionMm").value(0.0))
+                .andExpect(jsonPath("$.ejecucion.fotoClima[0].apta").value(true))
+                .andExpect(jsonPath("$.ejecucion.fotoClima[1].precipitacionMm").value(2.5))
+                .andExpect(jsonPath("$.ejecucion.fotoClima[1].apta").value(false))
+                .andExpect(jsonPath("$.ejecucion.fotoClima[1].motivo", containsString("lluvia")));
     }
 
     @Test

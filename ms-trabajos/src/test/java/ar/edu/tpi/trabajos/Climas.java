@@ -39,4 +39,32 @@ final class Climas {
         }
         return m;
     }
+
+    /**
+     * Respuesta cruda de Open-Meteo desde la marca {@code desde}, una marca por elemento. Lluvia y
+     * ráfaga van tal como las informa Open-Meteo: el valor de la marca H corresponde a [H - 1, H).
+     * Si una serie es null se usan valores aptos (sin lluvia, ráfaga 15).
+     */
+    static String openMeteo(String desde, double[] lluvia, double[] rafaga) {
+        int n = lluvia != null ? lluvia.length : rafaga.length;
+        LocalDateTime t = LocalDateTime.parse(desde);
+        StringBuilder time = new StringBuilder();
+        StringBuilder pp = new StringBuilder();
+        StringBuilder gu = new StringBuilder();
+        StringBuilder temp = new StringBuilder();
+        StringBuilder hum = new StringBuilder();
+        StringBuilder vel = new StringBuilder();
+        for (int i = 0; i < n; i++) {
+            String sep = i == 0 ? "" : ",";
+            time.append(sep).append('"').append(t.plusHours(i)).append('"');
+            pp.append(sep).append(lluvia != null ? lluvia[i] : 0);
+            gu.append(sep).append(rafaga != null ? rafaga[i] : 15);
+            temp.append(sep).append(22);
+            hum.append(sep).append(65);
+            vel.append(sep).append(10);
+        }
+        return ("{\"hourly\":{\"time\":[%s],\"temperature_2m\":[%s],\"relative_humidity_2m\":[%s],"
+                + "\"precipitation\":[%s],\"wind_speed_10m\":[%s],\"wind_gusts_10m\":[%s]}}")
+                .formatted(time, temp, hum, pp, vel, gu);
+    }
 }
