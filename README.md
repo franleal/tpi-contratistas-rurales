@@ -90,7 +90,7 @@ Para demostrar las fallas de integración hay dos overrides en `infra/compose/`:
    docker compose ps
    ```
 
-   Se esperan **seis servicios** levantados: `postgres` (healthy), `keycloak`, `ms-campos`, `ms-contratistas`, `ms-trabajos` y `gateway`. `Up` no siempre indica que una aplicación terminó de iniciar; revisar logs ante dudas:
+   Se esperan **seis servicios** en estado `healthy`. El arranque es reproducible porque cada contenedor tiene healthcheck y el orden se basa en ellos: `postgres` → `keycloak` y los tres microservicios (`/actuator/health`, que incluye la conexión a la base) → `gateway`. El primer arranque tarda unos minutos mientras se compilan las imágenes. Ante dudas, revisar los logs:
 
    ```powershell
    docker compose logs --tail 50 gateway

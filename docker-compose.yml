@@ -9,6 +9,13 @@
 
 x-servicio-java: &servicio-java
   restart: unless-stopped
+  healthcheck:
+    # Las imagenes JRE no traen curl: se consulta /actuator/health con bash y /dev/tcp
+    test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf "GET /actuator/health HTTP/1.0\r\n\r\n" >&3 && grep -q UP <&3']
+    interval: 10s
+    timeout: 5s
+    retries: 12
+    start_period: 40s
   networks:
     - interna
 
@@ -53,10 +60,18 @@ services:
       KC_HOSTNAME: http://localhost:8081
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      KC_HEALTH_ENABLED: "true"
     ports:
       - "127.0.0.1:8081:8080"
     volumes:
       - ./keycloak/agro-realm.json:/opt/keycloak/data/import/agro-realm.json:ro
+    healthcheck:
+      # Puerto de management de Keycloak (9000): /health/ready
+      test: ["CMD", "bash", "-c", 'exec 3<>/dev/tcp/127.0.0.1/9000 && printf "GET /health/ready HTTP/1.0\r\n\r\n" >&3 && grep -q UP <&3']
+      interval: 10s
+      timeout: 5s
+      retries: 15
+      start_period: 60s
     depends_on:
       postgres:
         condition: service_healthy
@@ -146,10 +161,14 @@ services:
     ports:
       - "127.0.0.1:8080:8080"
     depends_on:
-      - keycloak
-      - ms-campos
-      - ms-contratistas
-      - ms-trabajos
+      keycloak:
+        condition: service_healthy
+      ms-campos:
+        condition: service_healthy
+      ms-contratistas:
+        condition: service_healthy
+      ms-trabajos:
+        condition: service_healthy
 
 volumes:
   pgdata:
