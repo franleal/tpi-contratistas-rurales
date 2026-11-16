@@ -31,13 +31,14 @@ Respuesta `200`:
   "provincia": "Córdoba",
   "departamento": "Río Segundo",
   "zona": "AMORTIGUAMIENTO",
-  "categoriasPermitidas": ["III", "IV"]
+  "categoriasPermitidas": ["III", "IV"],
+  "admiteOrdenes": true
 }
 ```
 
 | Código | Cuándo | Qué hace ms-trabajos |
 |---|---|---|
-| 200 | Lote encontrado | Verifica `productorSub == sub` (si no, 403) y que `zona != EXCLUSION` (si no, 422) |
+| 200 | Lote encontrado | Verifica `productorSub == sub` (si no, 403) y que `admiteOrdenes` sea `true` (si no, 422: zona de EXCLUSION, RN-06) |
 | 401 | Token inválido | 503 (no debería ocurrir: el token ya fue validado) |
 | 404 | Lote inexistente | 404 |
 | timeout / 5xx | ms-campos caído | 503, la orden no se crea |

@@ -149,7 +149,20 @@ class LoteControllerTest {
                 .andExpect(jsonPath("$.productorSub").value("p1"))
                 .andExpect(jsonPath("$.superficieHa").value(120.5))
                 .andExpect(jsonPath("$.zona").value("LIBRE"))
+                .andExpect(jsonPath("$.admiteOrdenes").value(true))
                 .andExpect(jsonPath("$.categoriasPermitidas[0]").value("III"));
+    }
+
+    @Test
+    void contratoInternoIndicaQueUnLoteEnExclusionNoAdmiteOrdenes() throws Exception {
+        long est = crearEstablecimiento(P1);
+        String body = mvc.perform(post("/api/lotes").with(P1).contentType(MediaType.APPLICATION_JSON)
+                .content(lote(est, -31.005))).andReturn().getResponse().getContentAsString();
+        long id = ((Number) JsonPath.read(body, "$.id")).longValue();
+
+        mvc.perform(get("/internal/lotes/" + id).with(P1))
+                .andExpect(jsonPath("$.zona").value("EXCLUSION"))
+                .andExpect(jsonPath("$.admiteOrdenes").value(false));
     }
 
     @Test
