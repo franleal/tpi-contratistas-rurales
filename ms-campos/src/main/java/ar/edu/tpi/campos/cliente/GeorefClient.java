@@ -63,6 +63,9 @@ public class GeorefClient {
     /**
      * Localidades del departamento (con su centroide). Se filtra por provincia y
      * departamento porque los ids de departamento solo son únicos dentro de la provincia.
+     * Si alguna localidad viene sin un centroide utilizable la respuesta se considera
+     * incompleta (503): descartarla podría dejar el lote como LIBRE cuando en realidad está
+     * cerca de una zona urbana (RN-05, RN-08, falla segura).
      */
     public List<Localidad> localidades(String provinciaId, String departamentoId) {
         LocalidadesResponse resp = llamar(() -> http.get()
@@ -77,10 +80,22 @@ public class GeorefClient {
         if (resp == null || resp.localidades() == null) {
             throw new DependenciaNoDisponibleException("Georef devolvió una respuesta inesperada al listar localidades");
         }
+        for (LocalidadDto l : resp.localidades()) {
+            if (l == null || !centroideUtilizable(l.centroide())) {
+                log.warn("Georef devolvió la localidad {} sin centroide utilizable", l == null ? null : l.id());
+                throw new DependenciaNoDisponibleException("Georef devolvió localidades sin coordenadas: "
+                        + "no se puede clasificar el lote");
+            }
+        }
         return resp.localidades().stream()
-                .filter(l -> l.centroide() != null && l.centroide().lat() != null && l.centroide().lon() != null)
                 .map(l -> new Localidad(l.nombre(), l.centroide().lat(), l.centroide().lon()))
                 .toList();
+    }
+
+    static boolean centroideUtilizable(Centroide c) {
+        return c != null && c.lat() != null && c.lon() != null
+                && Double.isFinite(c.lat()) && Double.isFinite(c.lon())
+                && Math.abs(c.lat()) <= 90 && Math.abs(c.lon()) <= 180;
     }
 
     <T> T llamar(java.util.function.Supplier<T> llamada, String recurso) {

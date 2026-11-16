@@ -61,11 +61,37 @@ class GeorefClientTest {
                 .andRespond(withSuccess("""
                         {"localidades":[
                           {"id":"1","nombre":"Pilar","centroide":{"lat":-31.68,"lon":-63.88}},
-                          {"id":"2","nombre":"Sin centroide","centroide":null}]}""", MediaType.APPLICATION_JSON));
+                          {"id":"2","nombre":"Laguna Larga","centroide":{"lat":-31.78,"lon":-63.8}}]}""",
+                        MediaType.APPLICATION_JSON));
 
         var locs = client.localidades("14", "14119");
 
-        assertThat(locs).extracting(GeorefClient.Localidad::nombre).containsExactly("Pilar");
+        assertThat(locs).extracting(GeorefClient.Localidad::nombre).containsExactly("Pilar", "Laguna Larga");
+    }
+
+    /** RN-05/RN-08: descartar la localidad podría clasificar el lote como LIBRE; la respuesta es incompleta. */
+    @Test
+    void localidadSinCentroideEs503() {
+        server.expect(requestTo(startsWith("http://georef/localidades")))
+                .andRespond(withSuccess("""
+                        {"localidades":[
+                          {"id":"1","nombre":"Pilar","centroide":{"lat":-31.68,"lon":-63.88}},
+                          {"id":"2","nombre":"Sin centroide","centroide":null}]}""", MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.localidades("14", "14119"))
+                .isInstanceOf(DependenciaNoDisponibleException.class)
+                .hasMessageContaining("sin coordenadas");
+    }
+
+    @Test
+    void localidadConCoordenadaFaltanteEs503() {
+        server.expect(requestTo(startsWith("http://georef/localidades")))
+                .andRespond(withSuccess("""
+                        {"localidades":[{"id":"2","nombre":"Media","centroide":{"lat":-31.7,"lon":null}}]}""",
+                        MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.localidades("14", "14119"))
+                .isInstanceOf(DependenciaNoDisponibleException.class);
     }
 
     @Test
