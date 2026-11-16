@@ -74,7 +74,7 @@ Para demostrar las fallas de integración hay dos overrides en `infra/compose/`:
    | `OPEN_METEO_URL` | `https://api.open-meteo.com` | API de Open-Meteo (ms-trabajos) |
    | `HTTP_CONNECT_TIMEOUT_MS` / `HTTP_READ_TIMEOUT_MS` | `2000` / `8000` | Timeouts de los clientes HTTP |
    | `TRASLADO_FACTOR_RUTA` / `TRASLADO_VELOCIDAD_KMH` | `1.3` / `40` | Cálculo del traslado (RN-12) |
-   | `DDL_AUTO` / `SQL_INIT_MODE` | `create` / `always` | Recrear el esquema y cargar `data.sql` en cada arranque |
+   | `DDL_AUTO` / `SQL_INIT_MODE` | `create` / `always` | Recrear las tablas de negocio y cargar `data.sql` en cada arranque (ver [Persistencia de datos](#persistencia-de-datos)) |
 
    Cada servicio lee su configuración de `application.properties` con placeholders `${VARIABLE:defecto}`: los defectos sirven para IntelliJ (`localhost`) y Compose los reemplaza con los nombres de la red interna.
 
@@ -208,6 +208,12 @@ docker compose logs --tail 80 gateway
 
 **No ejecutar `docker compose down -v` salvo que se quiera eliminar deliberadamente el volumen de PostgreSQL.** Al destruir ese volumen se pierden datos, usuarios y configuración persistida de Keycloak.
 
+### Persistencia de datos
+
+- `docker compose down` (sin `-v`) **conserva el volumen `pgdata`**: siguen existiendo los esquemas, los usuarios `*_app` creados por `infra/db/init.sql` y la base de Keycloak (usuarios, sesiones, claves del realm).
+- Eso **no** conserva los datos de negocio. Con el valor por defecto `DDL_AUTO=create`, cada vez que arranca un microservicio Hibernate **elimina y recrea sus tablas** (lotes, órdenes, postulaciones, reservas, etc.) y `SQL_INIT_MODE=always` vuelve a cargar `data.sql`. Reiniciar un servicio deja sus datos en el estado de demostración, aunque el volumen siga intacto.
+- Para conservar los datos de negocio entre reinicios, definir en `.env` `DDL_AUTO=update` y `SQL_INIT_MODE=never` después del primer arranque (con `always` el `data.sql` se volvería a insertar sobre datos existentes).
+
 Cambiar `.env` después de la primera inicialización **no cambia automáticamente las contraseñas de los roles ya creados dentro de PostgreSQL**. Reconciliar las credenciales existentes si hace falta cambiarlas.
 
 ## Ejecutar desde IntelliJ (desarrollo local)
@@ -310,6 +316,8 @@ Swagger UI unificado en http://localhost:8080/swagger-ui.html: el selector super
 
 En `postman/` están la colección `tpi-contratistas.postman_collection.json` y el entorno `tpi-local.postman_environment.json`. Importar ambos, cargar la contraseña de demostración en la variable `password` del entorno y ejecutar primero la carpeta **0. Tokens**. La carpeta **1. Caso de uso principal** recorre orden → receta → ventanas → postulación → asignación con los datos de demostración; la **2** muestra los rechazos por regla y por seguridad.
 
+El paso **3. Contratista: ventanas climáticas aptas** elige el primer tramo de 4 horas desde mañana a las 06:00 (inicio de la agenda de demostración más el traslado). Una ventana que empieza antes se recorta: de una ventana de 05:00 a 10:00 se toma 06:00 a 10:00. Si no hay ningún tramo apto, el paso falla y deja `inicioPostulacion` vacío para que no se reutilice el valor de una corrida anterior; en ese caso cargarlo a mano.
+
 ## Datos de demostración
 
 Cada servicio carga su `data.sql` en cada arranque, con fechas relativas al día en que se levanta:
@@ -318,7 +326,7 @@ Cada servicio carga su `data.sql` en cada arranque, con fechas relativas al día
 - **ms-contratistas:** `contratista1` con máquina 1 y aplicador 1 habilitados por un año; `contratista2` con máquina 2, aplicador 2 cuyo carnet **vence a los 2 días** (RN-02) y aplicador 3 con carnet **pendiente** de validación; disponibilidad de ambas máquinas de mañana a 7 días.
 - **ms-trabajos:** umbrales climáticos; `agronomo1` con matrícula validada y `agronomo2` pendiente (RN-01).
 
-Con la base recién creada los ids son los indicados. Para volver al estado inicial: `docker compose down -v` y levantar de nuevo.
+Con `DDL_AUTO=create` (defecto) las tablas se recrean en cada arranque, así que los ids son siempre los indicados: para volver al estado inicial de los datos de negocio alcanza con reiniciar los microservicios (`docker compose restart ms-campos ms-contratistas ms-trabajos`). `docker compose down -v` solo hace falta para reinicializar PostgreSQL y Keycloak (por ejemplo, si cambió el realm) y borra todo el volumen.
 
 ## Pruebas automatizadas
 
@@ -354,7 +362,7 @@ Las pruebas usan H2 en modo PostgreSQL y simulan Keycloak, Georef, Open-Meteo y 
 - Postulación sin Open-Meteo o ms-contratistas: responder 503 sin guardarla.
 - Lote sin clasificar por falla de Georef: responder 503 sin guardarlo.
 - Ejecución sin consulta climática: registrar ejecución con clima NO_DISPONIBLE.
-- Reserva de agenda confirmada seguida de falla local: compensar liberándola.
+- Reserva de agenda confirmada seguida de falla local: compensar liberándola. Si la liberación falla por indisponibilidad se reintenta (hasta 3 intentos; el `DELETE` es idempotente); si sigue fallando, se registra `LIBERACION_PENDIENTE reservaId=…` en el log y se responde 503 indicando que la liberación quedó pendiente.
 
 ## Referencias de evaluación
 
