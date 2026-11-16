@@ -22,17 +22,19 @@ Backend de Aplicaciones — UTN FRC. Proyecto de backend basado en microservicio
 | `ms-campos` | Dominio de campos y lotes | Solo red Docker |
 | `ms-contratistas` | Dominio de contratistas | Solo red Docker |
 | `ms-trabajos` | Dominio de trabajos | Solo red Docker |
-| `postgres` | Persistencia, esquemas aislados | `localhost:5432` (desarrollo local) |
+| `postgres` | Persistencia, esquemas aislados | Solo red Docker (`localhost:5432` solo con `docker-compose.dev.yml`) |
 
 PostgreSQL contiene cuatro esquemas con usuarios propios: `campos`/`campos_app`, `contratistas`/`contratistas_app`, `trabajos`/`trabajos_app` y `keycloak`/`keycloak`.
 
-En esta rama el Gateway, Keycloak y PostgreSQL publican puertos en `127.0.0.1`. Los tres microservicios se comunican dentro de la red de Docker. Para cumplir la *Trusted zone* del enunciado, queda pendiente mover el puerto de PostgreSQL a un archivo de Compose exclusivo del modo IntelliJ.
+**Trusted zone:** solo el Gateway (8080) y Keycloak (8081) publican puertos, y solo en `127.0.0.1`. Los tres microservicios y PostgreSQL quedan en la red interna de Docker sin puertos expuestos. El puerto de PostgreSQL se publica únicamente con `docker-compose.dev.yml`, para el modo IntelliJ.
+
+Para demostrar las fallas de integración hay dos overrides en `infra/compose/`: `docker-compose.falla-meteo.yml` (Open-Meteo inaccesible) y `docker-compose.falla-georef.yml` (Georef inaccesible).
 
 ## Requisitos previos
 
 - Git.
 - Docker Desktop con Docker Engine activo y Docker Compose.
-- Puertos locales **8080**, **8081** y **5432** disponibles con el Compose actual.
+- Puertos locales **8080** y **8081** disponibles (y **5432** solo para el modo IntelliJ).
 
 **No es necesario instalar Java ni Maven para levantar el proyecto con Docker**: las imágenes construyen los JAR dentro de sus etapas Maven. Para ejecutar proyectos desde IntelliJ sí se necesita JDK 21.
 
@@ -201,7 +203,7 @@ Cambiar `.env` después de la primera inicialización **no cambia automáticamen
 1. Preparar `.env` con el paso 2 de [Primer arranque](#primer-arranque-windows--powershell). Si está corriendo el Compose completo, detenerlo primero con `docker compose down` para liberar el puerto `8080` y conservar los datos. Levantar PostgreSQL y Keycloak desde la raíz del repositorio:
 
    ```powershell
-   docker compose up -d postgres keycloak
+   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres keycloak
    docker compose ps
    ```
 
@@ -267,7 +269,6 @@ docker-compose.yml       # Orquestación de los seis contenedores
 - Validación del JWT también en **cada microservicio**, y control de propiedad con el `sub` del token.
 - Implementación de entidades, DTOs, controladores, servicios, reglas RN-01 a RN-17, integraciones externas, errores comunes y pruebas.
 - Retirar el material de claves del export de Keycloak y comprobar que el realm genere claves propias en una instalación nueva (**SEG-01**).
-- Publicar PostgreSQL únicamente al iniciar el modo IntelliJ (**INF-01**, *Trusted zone* del enunciado).
 - Verificación del arranque **desde un entorno limpio** por otro integrante del equipo. La importación inicial del realm no se probó todavía sobre una segunda instalación vacía.
 
 Los endpoints `/internal/**` son solo para llamadas entre microservicios autenticadas y **no deben enrutarse públicamente** en el Gateway. Ningún microservicio debe depender de entidades JPA, DTOs de negocio o reglas internas de otro servicio.
