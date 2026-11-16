@@ -4,8 +4,10 @@ import ar.edu.tpi.commons.excepcion.AccesoRecursoException;
 import ar.edu.tpi.commons.seguridad.CurrentUser;
 import ar.edu.tpi.trabajos.dominio.EstadoOrden;
 import ar.edu.tpi.trabajos.dominio.OrdenTrabajo;
+import ar.edu.tpi.trabajos.repositorio.AsignacionRepository;
 import ar.edu.tpi.trabajos.repositorio.OrdenTrabajoRepository;
 import ar.edu.tpi.trabajos.repositorio.RecetaRepository;
+import ar.edu.tpi.trabajos.web.dto.AsignacionResponse;
 import ar.edu.tpi.trabajos.web.dto.OrdenDetalleResponse;
 import ar.edu.tpi.trabajos.web.dto.OrdenResponse;
 import ar.edu.tpi.trabajos.web.dto.RecetaResponse;
@@ -25,11 +27,14 @@ public class ConsultaOrdenService {
     private final OrdenTrabajoRepository ordenes;
     private final RecetaRepository recetas;
     private final OrdenService ordenService;
+    private final AsignacionRepository asignaciones;
 
-    public ConsultaOrdenService(OrdenTrabajoRepository ordenes, RecetaRepository recetas, OrdenService ordenService) {
+    public ConsultaOrdenService(OrdenTrabajoRepository ordenes, RecetaRepository recetas, OrdenService ordenService,
+                                AsignacionRepository asignaciones) {
         this.ordenes = ordenes;
         this.recetas = recetas;
         this.ordenService = ordenService;
+        this.asignaciones = asignaciones;
     }
 
     @Transactional(readOnly = true)
@@ -47,15 +52,26 @@ public class ConsultaOrdenService {
         return visibles.filter(o -> estado == null || o.getEstado() == estado).map(OrdenResponse::de).toList();
     }
 
-    /** Punto de extensión: las asignadas al contratista se suman cuando existe la asignación. */
-    protected Stream<OrdenTrabajo> visiblesParaContratista(String sub) {
-        return ordenes.findByEstadoInOrderByIdDesc(List.of(EstadoOrden.ABIERTA)).stream();
+    /** Las abiertas (para postularse) y las que tiene asignadas, en cualquier estado posterior. */
+    private Stream<OrdenTrabajo> visiblesParaContratista(String sub) {
+        Stream<OrdenTrabajo> asignadas = asignaciones.findByPostulacionContratistaSub(sub).stream()
+                .map(a -> a.getOrden());
+        return Stream.concat(ordenes.findByEstadoInOrderByIdDesc(List.of(EstadoOrden.ABIERTA)).stream(), asignadas)
+                .sorted((a, b) -> Long.compare(b.getId(), a.getId()));
     }
 
     @Transactional(readOnly = true)
     public OrdenDetalleResponse detalle(Long id) {
         OrdenTrabajo o = CurrentUser.tieneRol("PRODUCTOR") ? ordenService.propia(id) : ordenService.buscar(id);
-        RecetaResponse receta = recetas.findByOrdenId(id).map(RecetaResponse::de).orElse(null);
-        return new OrdenDetalleResponse(OrdenResponse.de(o), receta);
+        return detalleDe(o);
+    }
+
+    /** Arma el detalle completo de una orden ya autorizada. */
+    @Transactional(readOnly = true)
+    public OrdenDetalleResponse detalleDe(OrdenTrabajo o) {
+        RecetaResponse receta = recetas.findByOrdenId(o.getId()).map(RecetaResponse::de).orElse(null);
+        AsignacionResponse asignacion = asignaciones.findByOrdenId(o.getId()).map(AsignacionResponse::de)
+                .orElse(null);
+        return new OrdenDetalleResponse(OrdenResponse.de(o), receta, asignacion);
     }
 }
