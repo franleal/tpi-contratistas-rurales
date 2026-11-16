@@ -8,6 +8,7 @@ import ar.edu.tpi.campos.dominio.Lote;
 import ar.edu.tpi.campos.dominio.ParametroZona;
 import ar.edu.tpi.campos.repositorio.LoteRepository;
 import ar.edu.tpi.campos.servicio.ClasificadorZona.Clasificacion;
+import ar.edu.tpi.campos.web.dto.LoteInternoResponse;
 import ar.edu.tpi.campos.web.dto.LoteRequest;
 import ar.edu.tpi.campos.web.dto.LoteResponse;
 import ar.edu.tpi.commons.excepcion.RecursoNoEncontradoException;
@@ -55,6 +56,18 @@ public class LoteService {
         Lote lote = buscar(id);
         CurrentUser.verificarDuenio(lote.getProductorSub(), "el lote " + id);
         return LoteResponse.de(lote);
+    }
+
+    /**
+     * Contrato interno para ms-trabajos: no aplica propiedad (la decide el llamador con
+     * productorSub) e incluye las categorías permitidas de la provincia (copia para RN-07).
+     */
+    @Transactional(readOnly = true)
+    public LoteInternoResponse consultarInterno(Long id) {
+        Lote l = buscar(id);
+        List<String> categorias = parametros.categoriasDe(l.getProvincia());
+        return new LoteInternoResponse(l.getId(), l.getProductorSub(), l.getNombre(), l.getLat(), l.getLon(),
+                l.getSuperficieHa(), l.getProvincia(), l.getDepartamento(), l.getZona(), categorias);
     }
 
     Lote buscar(Long id) {

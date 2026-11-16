@@ -141,6 +141,23 @@ class LoteControllerTest {
     }
 
     @Test
+    void contratoInternoIncluyeDuenioYCategorias() throws Exception {
+        long id = crearLote(P1);
+        // Lo invoca ms-trabajos con el token de cualquier usuario: no se aplica propiedad
+        mvc.perform(get("/internal/lotes/" + id).with(P2))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.productorSub").value("p1"))
+                .andExpect(jsonPath("$.superficieHa").value(120.5))
+                .andExpect(jsonPath("$.zona").value("LIBRE"))
+                .andExpect(jsonPath("$.categoriasPermitidas[0]").value("III"));
+    }
+
+    @Test
+    void contratoInternoSinTokenDevuelve401() throws Exception {
+        mvc.perform(get("/internal/lotes/1")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void loteInexistenteDevuelve404() throws Exception {
         mvc.perform(get("/api/lotes/999").with(P1)).andExpect(status().isNotFound());
     }

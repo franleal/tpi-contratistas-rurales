@@ -27,6 +27,12 @@ public class ParametroZonaService {
                 .toList();
     }
 
+    /** Categorías permitidas en amortiguamiento; vacío si la provincia ya no tiene parámetros. */
+    @Transactional(readOnly = true)
+    public List<String> categoriasDe(String provincia) {
+        return repo.findByProvinciaIgnoreCase(provincia).map(ParametroZona::getCategorias).orElse(List.of());
+    }
+
     /** Parámetros de la provincia del lote; 422 si la provincia no está configurada (RN-05). */
     @Transactional(readOnly = true)
     public ParametroZona deProvincia(String provincia) {
