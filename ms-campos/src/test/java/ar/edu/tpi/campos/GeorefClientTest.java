@@ -54,6 +54,29 @@ class GeorefClientTest {
     }
 
     @Test
+    void listaLocalidadesDelDepartamentoConCentroide() {
+        server.expect(requestTo(startsWith("http://georef/localidades")))
+                .andExpect(queryParam("provincia", "14"))
+                .andExpect(queryParam("departamento", "14119"))
+                .andRespond(withSuccess("""
+                        {"localidades":[
+                          {"id":"1","nombre":"Pilar","centroide":{"lat":-31.68,"lon":-63.88}},
+                          {"id":"2","nombre":"Sin centroide","centroide":null}]}""", MediaType.APPLICATION_JSON));
+
+        var locs = client.localidades("14", "14119");
+
+        assertThat(locs).extracting(GeorefClient.Localidad::nombre).containsExactly("Pilar");
+    }
+
+    @Test
+    void respuestaSinLocalidadesEs503() {
+        server.expect(requestTo(startsWith("http://georef/localidades")))
+                .andRespond(withSuccess("{\"error\":\"x\"}", MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.localidades("14", "1")).isInstanceOf(DependenciaNoDisponibleException.class);
+    }
+
+    @Test
     void errorDeGeorefEs503() {
         server.expect(requestTo(startsWith("http://georef/ubicacion"))).andRespond(withStatus(HttpStatus.BAD_GATEWAY));
 
