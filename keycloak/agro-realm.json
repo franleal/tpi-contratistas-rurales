@@ -5,7 +5,7 @@
   "defaultSignatureAlgorithm" : "RS256",
   "revokeRefreshToken" : false,
   "refreshTokenMaxReuse" : 0,
-  "accessTokenLifespan" : 300,
+  "accessTokenLifespan" : 1800,
   "accessTokenLifespanForImplicitFlow" : 900,
   "ssoSessionIdleTimeout" : 1800,
   "ssoSessionMaxLifespan" : 36000,
@@ -409,6 +409,155 @@
   "webAuthnPolicyPasswordlessAvoidSameAuthenticatorRegister" : false,
   "webAuthnPolicyPasswordlessAcceptableAaguids" : [ ],
   "webAuthnPolicyPasswordlessExtraOrigins" : [ ],
+  "users" : [
+    {
+      "id" : "11111111-0000-0000-0000-000000000001",
+      "username" : "productor1",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Pedro",
+      "lastName" : "Productor",
+      "email" : "productor1@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "PRODUCTOR"
+      ]
+    },
+    {
+      "id" : "11111111-0000-0000-0000-000000000002",
+      "username" : "productor2",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Paula",
+      "lastName" : "Productora",
+      "email" : "productor2@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "PRODUCTOR"
+      ]
+    },
+    {
+      "id" : "22222222-0000-0000-0000-000000000001",
+      "username" : "contratista1",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Carlos",
+      "lastName" : "Contratista",
+      "email" : "contratista1@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "CONTRATISTA"
+      ]
+    },
+    {
+      "id" : "22222222-0000-0000-0000-000000000002",
+      "username" : "contratista2",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Clara",
+      "lastName" : "Contratista",
+      "email" : "contratista2@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "CONTRATISTA"
+      ]
+    },
+    {
+      "id" : "33333333-0000-0000-0000-000000000001",
+      "username" : "agronomo1",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Ana",
+      "lastName" : "Agronoma",
+      "email" : "agronomo1@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "AGRONOMO"
+      ]
+    },
+    {
+      "id" : "33333333-0000-0000-0000-000000000002",
+      "username" : "agronomo2",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Andres",
+      "lastName" : "Agronomo",
+      "email" : "agronomo2@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "AGRONOMO"
+      ]
+    },
+    {
+      "id" : "44444444-0000-0000-0000-000000000001",
+      "username" : "admin1",
+      "enabled" : true,
+      "emailVerified" : true,
+      "firstName" : "Alicia",
+      "lastName" : "Administradora",
+      "email" : "admin1@agro.test",
+      "credentials" : [
+        {
+          "type" : "password",
+          "value" : "agro2026",
+          "temporary" : false
+        }
+      ],
+      "requiredActions" : [],
+      "realmRoles" : [
+        "default-roles-agro",
+        "ADMIN"
+      ]
+    }
+  ],
   "scopeMappings" : [ {
     "clientScope" : "offline_access",
     "roles" : [ "offline_access" ]

@@ -108,7 +108,19 @@ Panel: http://localhost:8081/admin/
 
 Al iniciar sobre una base vacía, Compose crea los esquemas de PostgreSQL y Keycloak importa la configuración desde `keycloak/agro-realm.json`. **Si el realm ya existe, Keycloak omite la importación en el arranque.**
 
-El archivo del realm fue exportado **sin usuarios**. Por eso, en una instalación nueva se debe crear manualmente un usuario de prueba para solicitar JWT: en el realm `agro`, ir a **Users → Add user**, asignar el rol `PRODUCTOR` en **Role mapping**, establecer una contraseña **no temporal** en **Credentials** y completar las acciones requeridas del perfil (por ejemplo, nombre y correo de prueba). No incorporar contraseñas de prueba al repositorio.
+El realm se importa con **siete usuarios de prueba** con `id` fijo (así los `data.sql` pueden referenciar su `sub`). Todos usan la contraseña de demostración `agro2026`, que **solo existe para la demo local** (enunciado, pregunta 10):
+
+| Usuario | Rol | `sub` |
+| --- | --- | --- |
+| `productor1` | PRODUCTOR | `11111111-0000-0000-0000-000000000001` |
+| `productor2` | PRODUCTOR | `11111111-0000-0000-0000-000000000002` |
+| `contratista1` | CONTRATISTA | `22222222-0000-0000-0000-000000000001` |
+| `contratista2` | CONTRATISTA | `22222222-0000-0000-0000-000000000002` |
+| `agronomo1` | AGRONOMO | `33333333-0000-0000-0000-000000000001` |
+| `agronomo2` | AGRONOMO (matrícula pendiente en `data.sql`) | `33333333-0000-0000-0000-000000000002` |
+| `admin1` | ADMIN | `44444444-0000-0000-0000-000000000001` |
+
+El token dura 30 minutos (`accessTokenLifespan = 1800`) y lleva los roles en `realm_access.roles`. El export **no incluye material de claves**: Keycloak genera claves propias en cada instalación nueva (SEG-01). Si se cambia el realm, borrar el volumen (`docker compose down -v`) para que se vuelva a importar.
 
 ## Pruebas rápidas
 
