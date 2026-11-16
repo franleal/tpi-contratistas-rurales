@@ -48,6 +48,11 @@ final class Fixtures {
                 {"maquinaId":%d,"desde":"%s","hasta":"%s"}""".formatted(maquinaId, desde, hasta)));
     }
 
+    static String reserva(long maquinaId, long ordenId, String desde, String hasta) {
+        return """
+                {"maquinaId":%d,"ordenId":%d,"desde":"%s","hasta":"%s"}""".formatted(maquinaId, ordenId, desde, hasta);
+    }
+
     static long maquina(MockMvc mvc, RequestPostProcessor quien) throws Exception {
         return id(crear(mvc, quien, "/api/maquinas", """
                 {"descripcion":"Pulverizadora autopropulsada","anchoM":28,"rendimientoHaH":25,"baseLat":-31.4,"baseLon":-64.18}"""));
