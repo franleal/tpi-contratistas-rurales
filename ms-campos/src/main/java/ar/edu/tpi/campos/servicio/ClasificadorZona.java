@@ -40,7 +40,7 @@ public class ClasificadorZona {
                 .orElse(new Clasificacion(Zona.LIBRE, null, null));
     }
 
-    static Zona zonaPara(long metros, int exclusionM, int amortiguamientoM) {
+    public static Zona zonaPara(long metros, int exclusionM, int amortiguamientoM) {
         if (metros <= exclusionM) {
             return Zona.EXCLUSION;
         }
