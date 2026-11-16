@@ -547,7 +547,7 @@
                 }
               ]
             },
-            "description": "F-12, RN-09. Usa el pronóstico real de Open-Meteo: si no hay ventanas aptas desde mañana, cargar inicioPostulacion a mano."
+            "description": "F-12, RN-09. Usa el pronóstico real de Open-Meteo. Elige el primer tramo de 4 h desde mañana 06:00, recortando ventanas que empiezan antes (05:00-10:00 -> 06:00). Si no hay tramo apto deja inicioPostulacion vacío; en ese caso cargarlo a mano."
           },
           "event": [
             {
@@ -556,15 +556,29 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
-                  "const v = pm.response.json();",
-                  "// la agenda de demostración empieza mañana a las 05:00: se elige una ventana desde mañana 06:00",
-                  "// con al menos 4 horas (el lote 1 lleva 4 h de aplicación: 100 ha a 25 ha/h con la máquina 1)",
-                  "const m = new Date(); m.setDate(m.getDate() + 1);",
+                  "// una corrida anterior no debe contaminar esta: se limpia antes de elegir",
+                  "pm.collectionVariables.set(\"inicioPostulacion\", \"\");",
+                  "let v = [];",
+                  "try { v = pm.response.json(); } catch (e) { v = []; }",
+                  "if (!Array.isArray(v)) { v = []; }",
+                  "// la agenda de demostración empieza mañana a las 05:00: el trabajo puede empezar desde mañana 06:00",
+                  "// y necesita 4 horas (el lote 1 lleva 4 h de aplicación: 100 ha a 25 ha/h con la máquina 1).",
+                  "// Una ventana que empieza antes (p. ej. 05:00 a 10:00) sirve recortada: 06:00 a 10:00.",
+                  "const HORAS = 4;",
                   "const p = n => String(n).padStart(2, \"0\");",
-                  "const desde = m.getFullYear() + \"-\" + p(m.getMonth() + 1) + \"-\" + p(m.getDate()) + \"T06:00:00\";",
-                  "const elegida = v.find(x => x.desde >= desde && x.horas >= 4);",
-                  "if (elegida) { pm.collectionVariables.set(\"inicioPostulacion\", elegida.desde); }",
-                  "pm.test(\"hay una ventana apta desde mañana (depende del pronóstico real)\", () => pm.expect(elegida).to.not.be.undefined);"
+                  "const leer = s => { const [f, h] = s.split(\"T\"); const [a, m, d] = f.split(\"-\").map(Number);",
+                  "  const [hh, mi] = h.split(\":\").map(Number); return new Date(a, m - 1, d, hh, mi || 0, 0, 0); };",
+                  "const escribir = t => t.getFullYear() + \"-\" + p(t.getMonth() + 1) + \"-\" + p(t.getDate()) + \"T\"",
+                  "  + p(t.getHours()) + \":\" + p(t.getMinutes()) + \":00\";",
+                  "const minimo = new Date(); minimo.setDate(minimo.getDate() + 1); minimo.setHours(6, 0, 0, 0);",
+                  "let elegida;",
+                  "for (const x of v) {",
+                  "  const inicio = new Date(Math.max(leer(x.desde).getTime(), minimo.getTime()));",
+                  "  if (leer(x.hasta).getTime() - inicio.getTime() >= HORAS * 3600 * 1000) { elegida = escribir(inicio); break; }",
+                  "}",
+                  "if (elegida) { pm.collectionVariables.set(\"inicioPostulacion\", elegida); }",
+                  "console.log(\"inicioPostulacion =\", elegida || \"(sin tramo apto)\");",
+                  "pm.test(\"hay un tramo apto de 4 h desde mañana 06:00 (depende del pronóstico real)\", () => pm.expect(elegida).to.not.be.undefined);"
                 ]
               }
             }
