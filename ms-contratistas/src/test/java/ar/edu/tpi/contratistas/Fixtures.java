@@ -32,6 +32,12 @@ final class Fixtures {
                 {"nombre":"Aplicador %s","documento":"%s"}""".formatted(documento, documento)));
     }
 
+    static long habilitacion(MockMvc mvc, RequestPostProcessor quien, String tipo, long titularId, String vence)
+            throws Exception {
+        return id(crear(mvc, quien, "/api/habilitaciones", """
+                {"tipo":"%s","titularId":%d,"numero":"N-%d","vencimiento":"%s"}""".formatted(tipo, titularId, titularId, vence)));
+    }
+
     static long maquina(MockMvc mvc, RequestPostProcessor quien) throws Exception {
         return id(crear(mvc, quien, "/api/maquinas", """
                 {"descripcion":"Pulverizadora autopropulsada","anchoM":28,"rendimientoHaH":25,"baseLat":-31.4,"baseLon":-64.18}"""));
