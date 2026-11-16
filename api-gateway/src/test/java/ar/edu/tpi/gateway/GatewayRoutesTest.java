@@ -43,6 +43,15 @@ class GatewayRoutesTest {
         assertThat(rutaPara(path)).isEqualTo(servicio);
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "/campos/v3/api-docs, docs-campos",
+            "/contratistas/v3/api-docs, docs-contratistas",
+            "/trabajos/v3/api-docs, docs-trabajos"})
+    void documentacionDeCadaServicio(String path, String ruta) {
+        assertThat(rutaPara(path)).isEqualTo(ruta);
+    }
+
     @Test
     void rutasInternasNoSePublican() {
         assertThat(rutaPara("/internal/lotes/1")).isNull();

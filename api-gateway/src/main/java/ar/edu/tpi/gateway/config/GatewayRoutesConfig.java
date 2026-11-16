@@ -46,6 +46,13 @@ public class GatewayRoutesConfig {
                 .route("campos", r -> r.path(RUTAS_CAMPOS).uri(camposUrl))
                 .route("contratistas", r -> r.path(RUTAS_CONTRATISTAS).uri(contratistasUrl))
                 .route("trabajos", r -> r.path(RUTAS_TRABAJOS).uri(trabajosUrl))
+                // Documentación OpenAPI de cada servicio: /{servicio}/v3/api-docs -> /v3/api-docs
+                .route("docs-campos", r -> r.path("/campos/v3/api-docs")
+                        .filters(f -> f.rewritePath("/campos/(?<resto>.*)", "/${resto}")).uri(camposUrl))
+                .route("docs-contratistas", r -> r.path("/contratistas/v3/api-docs")
+                        .filters(f -> f.rewritePath("/contratistas/(?<resto>.*)", "/${resto}")).uri(contratistasUrl))
+                .route("docs-trabajos", r -> r.path("/trabajos/v3/api-docs")
+                        .filters(f -> f.rewritePath("/trabajos/(?<resto>.*)", "/${resto}")).uri(trabajosUrl))
                 .build();
     }
 }
