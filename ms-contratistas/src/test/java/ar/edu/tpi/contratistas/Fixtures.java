@@ -42,6 +42,12 @@ final class Fixtures {
         mvc.perform(post("/api/admin/habilitaciones/" + habilitacionId + "/aprobar").with(Usuarios.ADMIN));
     }
 
+    static long bloque(MockMvc mvc, RequestPostProcessor quien, long maquinaId, String desde, String hasta)
+            throws Exception {
+        return id(crear(mvc, quien, "/api/agenda/bloques", """
+                {"maquinaId":%d,"desde":"%s","hasta":"%s"}""".formatted(maquinaId, desde, hasta)));
+    }
+
     static long maquina(MockMvc mvc, RequestPostProcessor quien) throws Exception {
         return id(crear(mvc, quien, "/api/maquinas", """
                 {"descripcion":"Pulverizadora autopropulsada","anchoM":28,"rendimientoHaH":25,"baseLat":-31.4,"baseLon":-64.18}"""));
