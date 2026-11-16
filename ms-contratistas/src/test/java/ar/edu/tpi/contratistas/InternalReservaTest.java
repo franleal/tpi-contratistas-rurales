@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import static ar.edu.tpi.contratistas.Usuarios.C1;
 import static ar.edu.tpi.contratistas.Usuarios.usuario;
 import static org.hamcrest.Matchers.containsString;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -84,6 +85,25 @@ class InternalReservaTest {
     @Test
     void reservaFueraDeBloqueDevuelve422() throws Exception {
         reservar(7, "2026-12-11T08:00:00", "2026-12-11T12:00:00").andExpect(status().isUnprocessableEntity());
+    }
+
+    @Test
+    void liberarDejaLibreElIntervaloYEsIdempotente() throws Exception {
+        long id = Fixtures.id(reservar(7, "2026-12-10T08:00:00", "2026-12-10T12:00:00")
+                .andReturn().getResponse().getContentAsString());
+        mvc.perform(delete("/internal/agenda/reservas/" + id).with(usuario("p1"))).andExpect(status().isNoContent());
+        mvc.perform(delete("/internal/agenda/reservas/" + id).with(usuario("p1"))).andExpect(status().isNoContent());
+
+        disponibilidad("2026-12-10T08:00:00", "2026-12-10T12:00:00").andExpect(jsonPath("$.disponible").value(true));
+        reservar(8, "2026-12-10T09:00:00", "2026-12-10T11:00:00").andExpect(status().isCreated());
+        mvc.perform(get("/api/agenda/bloques").param("maquinaId", String.valueOf(maquina)).with(C1))
+                .andExpect(jsonPath("$.reservas[0].estado").value("LIBERADA"))
+                .andExpect(jsonPath("$.reservas[1].estado").value("ACTIVA"));
+    }
+
+    @Test
+    void liberarInexistenteDevuelve404() throws Exception {
+        mvc.perform(delete("/internal/agenda/reservas/999").with(usuario("p1"))).andExpect(status().isNotFound());
     }
 
     @Test

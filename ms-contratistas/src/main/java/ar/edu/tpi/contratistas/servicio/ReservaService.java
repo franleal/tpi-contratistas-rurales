@@ -3,6 +3,7 @@ package ar.edu.tpi.contratistas.servicio;
 import ar.edu.tpi.commons.excepcion.ConflictoEstadoException;
 import ar.edu.tpi.commons.excepcion.RecursoNoEncontradoException;
 import ar.edu.tpi.commons.excepcion.ReglaNegocioException;
+import ar.edu.tpi.contratistas.dominio.EstadoReserva;
 import ar.edu.tpi.contratistas.dominio.Maquina;
 import ar.edu.tpi.contratistas.dominio.Reserva;
 import ar.edu.tpi.contratistas.repositorio.BloqueDisponibilidadRepository;
@@ -69,6 +70,20 @@ public class ReservaService {
         log.info("Reserva {} creada: máquina {} orden {} [{} - {})", r.getId(), m.getId(), req.ordenId(),
                 req.desde(), req.hasta());
         return ReservaResponse.de(r);
+    }
+
+    /**
+     * Compensación de F-15: libera la reserva si ms-trabajos no pudo guardar la asignación.
+     * Idempotente: liberar dos veces responde igual (ms-trabajos puede reintentar). 404 si no existe.
+     */
+    @Transactional
+    public void liberar(Long id) {
+        Reserva r = reservas.findById(id)
+                .orElseThrow(() -> new RecursoNoEncontradoException("No existe la reserva " + id));
+        if (r.getEstado() == EstadoReserva.ACTIVA) {
+            r.liberar();
+            log.warn("Reserva {} LIBERADA (compensación de la orden {})", id, r.getOrdenId());
+        }
     }
 
     private Optional<String> motivoNoDisponible(Long maquinaId, LocalDateTime desde, LocalDateTime hasta) {
