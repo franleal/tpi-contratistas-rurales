@@ -68,6 +68,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=campos
       DB_USER: campos_app
       DB_PASSWORD: ${CAMPOS_DB_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:8081/realms/agro
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/agro/protocol/openid-connect/certs
       JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
 
     depends_on:
@@ -87,6 +89,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=contratistas
       DB_USER: contratistas_app
       DB_PASSWORD: ${CONTRATISTAS_DB_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:8081/realms/agro
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/agro/protocol/openid-connect/certs
       JAVA_TOOL_OPTIONS: -Duser.timezone=America/Argentina/Buenos_Aires
 
     depends_on:
@@ -106,6 +110,8 @@ services:
       DB_URL: jdbc:postgresql://postgres:5432/postgres?currentSchema=trabajos
       DB_USER: trabajos_app
       DB_PASSWORD: ${TRABAJOS_DB_PASSWORD}
+      JWT_ISSUER_URI: http://localhost:8081/realms/agro
+      JWT_JWK_SET_URI: http://keycloak:8080/realms/agro/protocol/openid-connect/certs
 
       CAMPOS_URL: http://ms-campos:8080
       CONTRATISTAS_URL: http://ms-contratistas:8080
