@@ -66,6 +66,18 @@ Para demostrar las fallas de integración hay dos overrides en `infra/compose/`:
    | `KC_DB_PASSWORD` | Usuario de base de datos `keycloak` |
    | `KEYCLOAK_ADMIN_PASSWORD` | Usuario `admin` del panel Keycloak |
 
+   Variables opcionales (tienen valor por defecto en `docker-compose.yml`):
+
+   | Variable | Defecto | Uso |
+   | --- | --- | --- |
+   | `GEOREF_URL` | `https://apis.datos.gob.ar/georef/api` | API de Georef (ms-campos) |
+   | `OPEN_METEO_URL` | `https://api.open-meteo.com` | API de Open-Meteo (ms-trabajos) |
+   | `HTTP_CONNECT_TIMEOUT_MS` / `HTTP_READ_TIMEOUT_MS` | `2000` / `8000` | Timeouts de los clientes HTTP |
+   | `TRASLADO_FACTOR_RUTA` / `TRASLADO_VELOCIDAD_KMH` | `1.3` / `40` | Cálculo del traslado (RN-12) |
+   | `DDL_AUTO` / `SQL_INIT_MODE` | `create` / `always` | Recrear el esquema y cargar `data.sql` en cada arranque |
+
+   Cada servicio lee su configuración de `application.properties` con placeholders `${VARIABLE:defecto}`: los defectos sirven para IntelliJ (`localhost`) y Compose los reemplaza con los nombres de la red interna.
+
    **No publicar `.env` ni contraseñas reales.** Verificar que Git lo ignore:
 
    ```powershell
