@@ -1,5 +1,6 @@
 package ar.edu.tpi.trabajos.servicio;
 
+import ar.edu.tpi.commons.excepcion.ReglaNegocioException;
 import ar.edu.tpi.commons.util.GeoUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -35,6 +36,9 @@ public class CalculadoraPostulacion {
     public Calculo calcular(BigDecimal superficieHa, BigDecimal rendimientoHaH, double loteLat, double loteLon,
                             double baseLat, double baseLon, LocalDateTime inicio) {
         // RN-11: horas = superficie / rendimiento; fin = inicio + horas
+        if (rendimientoHaH == null || rendimientoHaH.signum() <= 0) {
+            throw new ReglaNegocioException("La máquina no tiene un rendimiento válido (debe ser mayor que 0) (RN-11)");
+        }
         double horas = superficieHa.doubleValue() / rendimientoHaH.doubleValue();
         // RN-12: traslado = Haversine(base, lote) x factor / velocidad; ocupada desde inicio - traslado
         double km = GeoUtils.haversineKm(baseLat, baseLon, loteLat, loteLon);

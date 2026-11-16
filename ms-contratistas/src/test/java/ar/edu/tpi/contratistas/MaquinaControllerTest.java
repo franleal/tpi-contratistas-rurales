@@ -54,6 +54,26 @@ class MaquinaControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
+    /** RN-11: 0.001 es positivo pero se guardaría como 0.00; se rechaza antes de guardar. */
+    @Test
+    void rendimientoConMasDeDosDecimalesDevuelve400() throws Exception {
+        Fixtures.empresa(mvc, C1, "30712345679");
+        mvc.perform(post("/api/maquinas").with(C1).contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"descripcion":"X","anchoM":28,"rendimientoHaH":0.001,"baseLat":-31.4,"baseLon":-64.18}"""))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void rendimientoDeUnCentesimoSeAcepta() throws Exception {
+        Fixtures.empresa(mvc, C1, "30712345679");
+        mvc.perform(post("/api/maquinas").with(C1).contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"descripcion":"X","anchoM":28,"rendimientoHaH":0.01,"baseLat":-31.4,"baseLon":-64.18}"""))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.rendimientoHaH").value(0.01));
+    }
+
     @Test
     void listaSoloLasPropias() throws Exception {
         Fixtures.empresa(mvc, C1, "30712345679");

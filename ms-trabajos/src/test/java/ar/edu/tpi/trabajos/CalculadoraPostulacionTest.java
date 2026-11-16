@@ -16,6 +16,14 @@ class CalculadoraPostulacionTest {
 
     final CalculadoraPostulacion calc = new CalculadoraPostulacion(1.3, 40);
 
+    /** RN-11: un rendimiento 0.00 (p. ej. guardado antes de validar la escala) no divide por cero. */
+    @Test
+    void rendimientoCeroSeRechazaSinDividir() {
+        assertThatThrownBy(() -> calc.calcular(new BigDecimal("100"), new BigDecimal("0.00"), 0, 0, 0, 0, INICIO))
+                .isInstanceOf(ar.edu.tpi.commons.excepcion.ReglaNegocioException.class)
+                .hasMessageContaining("rendimiento");
+    }
+
     @Test
     void horasDeAplicacionYFin() {
         // 100 ha / 25 ha/h = 4 h exactas

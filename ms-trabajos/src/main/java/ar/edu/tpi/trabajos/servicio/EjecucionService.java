@@ -125,13 +125,19 @@ public class EjecucionService {
         }
     }
 
-    /** RN-15: fin posterior al inicio y no futuro; hectáreas mayores que 0 y hasta la superficie del lote. */
+    /**
+     * RN-15: fin posterior al inicio y no futuro; hectáreas mayores que 0, con a lo sumo dos decimales
+     * (se guardan con escala 2: 0.001 quedaría en 0.00) y hasta la superficie del lote.
+     */
     private void validar(OrdenTrabajo orden, EjecucionRequest req) {
         if (!req.fin().isAfter(req.inicio())) {
             throw new ReglaNegocioException("El fin de la ejecución debe ser posterior al inicio (RN-15)");
         }
         if (req.fin().isAfter(LocalDateTime.now(reloj))) {
             throw new ReglaNegocioException("El fin de la ejecución no puede estar en el futuro (RN-15)");
+        }
+        if (req.hectareas().stripTrailingZeros().scale() > 2) {
+            throw new ReglaNegocioException("Las hectáreas aplicadas admiten a lo sumo dos decimales (RN-15)");
         }
         if (req.hectareas().signum() <= 0 || req.hectareas().compareTo(orden.getSuperficieHa()) > 0) {
             throw new ReglaNegocioException("Las hectáreas aplicadas deben ser mayores que 0 y no superar la "

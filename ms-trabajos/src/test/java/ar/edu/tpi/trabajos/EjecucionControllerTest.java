@@ -13,6 +13,7 @@ import java.time.LocalDate;
 
 import static ar.edu.tpi.trabajos.Usuarios.C1;
 import static ar.edu.tpi.trabajos.Usuarios.C2;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,6 +59,22 @@ class EjecucionControllerTest extends EjecucionBase {
     void hectareasMayoresALaSuperficieDevuelve422() throws Exception {
         registrar(C1, INICIO, INICIO.plusHours(4), "100.01").andExpect(status().isUnprocessableEntity());
         registrar(C1, INICIO, INICIO.plusHours(4), "0").andExpect(status().isUnprocessableEntity());
+    }
+
+    /** RN-15: 0.001 es positivo pero se guardaría como 0.00; se rechaza antes de guardar. */
+    @Test
+    void hectareasConMasDeDosDecimalesDevuelve422() throws Exception {
+        registrar(C1, INICIO, INICIO.plusHours(4), "0.001")
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.mensaje", containsString("dos decimales")));
+        assertThat(ordenes.findById(orden).orElseThrow().getEstado()).isEqualTo(EstadoOrden.ASIGNADA);
+    }
+
+    @Test
+    void hectareasDeUnCentesimoSeAceptan() throws Exception {
+        registrar(C1, INICIO, INICIO.plusHours(4), "0.01")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.ejecucion.hectareas").value(0.01));
     }
 
     @Test
