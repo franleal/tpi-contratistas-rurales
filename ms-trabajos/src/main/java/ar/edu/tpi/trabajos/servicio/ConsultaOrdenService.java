@@ -7,7 +7,9 @@ import ar.edu.tpi.trabajos.dominio.OrdenTrabajo;
 import ar.edu.tpi.trabajos.repositorio.AsignacionRepository;
 import ar.edu.tpi.trabajos.repositorio.OrdenTrabajoRepository;
 import ar.edu.tpi.trabajos.repositorio.RecetaRepository;
+import ar.edu.tpi.trabajos.repositorio.RegistroEjecucionRepository;
 import ar.edu.tpi.trabajos.web.dto.AsignacionResponse;
+import ar.edu.tpi.trabajos.web.dto.EjecucionResponse;
 import ar.edu.tpi.trabajos.web.dto.OrdenDetalleResponse;
 import ar.edu.tpi.trabajos.web.dto.OrdenResponse;
 import ar.edu.tpi.trabajos.web.dto.RecetaResponse;
@@ -28,9 +30,11 @@ public class ConsultaOrdenService {
     private final RecetaRepository recetas;
     private final OrdenService ordenService;
     private final AsignacionRepository asignaciones;
+    private final RegistroEjecucionRepository ejecuciones;
 
     public ConsultaOrdenService(OrdenTrabajoRepository ordenes, RecetaRepository recetas, OrdenService ordenService,
-                                AsignacionRepository asignaciones) {
+                                AsignacionRepository asignaciones, RegistroEjecucionRepository ejecuciones) {
+        this.ejecuciones = ejecuciones;
         this.ordenes = ordenes;
         this.recetas = recetas;
         this.ordenService = ordenService;
@@ -72,6 +76,7 @@ public class ConsultaOrdenService {
         RecetaResponse receta = recetas.findByOrdenId(o.getId()).map(RecetaResponse::de).orElse(null);
         AsignacionResponse asignacion = asignaciones.findByOrdenId(o.getId()).map(AsignacionResponse::de)
                 .orElse(null);
-        return new OrdenDetalleResponse(OrdenResponse.de(o), receta, asignacion);
+        EjecucionResponse ejecucion = ejecuciones.findByOrdenId(o.getId()).map(EjecucionResponse::de).orElse(null);
+        return new OrdenDetalleResponse(OrdenResponse.de(o), receta, asignacion, ejecucion);
     }
 }
