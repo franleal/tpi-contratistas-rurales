@@ -2,6 +2,7 @@ package ar.edu.tpi.trabajos;
 
 import ar.edu.tpi.commons.excepcion.ConflictoEstadoException;
 import ar.edu.tpi.commons.excepcion.DependenciaNoDisponibleException;
+import ar.edu.tpi.commons.excepcion.RecursoNoEncontradoException;
 import ar.edu.tpi.trabajos.cliente.ContratistasClient;
 import ar.edu.tpi.trabajos.dominio.EstadoOrden;
 import ar.edu.tpi.trabajos.dominio.EstadoPostulacion;
@@ -32,12 +33,13 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
  * Compensación de F-15 con Mockito: si el guardado local falla después de reservar, se libera la
- * reserva; si la reserva falla, no hay nada que compensar.
+ * reserva, con reintentos acotados si la liberación falla; si la reserva falla, no hay nada que compensar.
  */
 @ExtendWith(MockitoExtension.class)
 class CompensacionAsignacionTest {
@@ -101,13 +103,50 @@ class CompensacionAsignacionTest {
     }
 
     @Test
-    void siLaLiberacionTambienFallaSeConservaElErrorOriginal() {
+    void liberacionQueFallaUnaVezSeReintentaYQuedaLiberada() {
+        reservaOk();
+        when(persistencia.guardar(7L, 20L, 99L)).thenThrow(new DataAccessResourceFailureException("db caída"));
+        doThrow(new DependenciaNoDisponibleException("ms-contratistas no está disponible"))
+                .doNothing()
+                .when(contratistas).liberar(99L);
+        assertThatThrownBy(() -> service.asignar(7L, new AsignacionRequest(20L)))
+                .isInstanceOf(DependenciaNoDisponibleException.class).hasMessageContaining("fue liberada");
+        verify(contratistas, times(2)).liberar(99L);
+    }
+
+    @Test
+    void dobleFallaReintentaAcotadoYInformaLiberacionPendiente() {
         reservaOk();
         when(persistencia.guardar(7L, 20L, 99L)).thenThrow(new DataAccessResourceFailureException("db caída"));
         doThrow(new DependenciaNoDisponibleException("ms-contratistas no está disponible"))
                 .when(contratistas).liberar(99L);
         assertThatThrownBy(() -> service.asignar(7L, new AsignacionRequest(20L)))
-                .isInstanceOf(DependenciaNoDisponibleException.class).hasMessageContaining("orden 7");
+                .isInstanceOf(DependenciaNoDisponibleException.class)
+                .hasMessageContaining("orden 7")
+                .hasMessageContaining("reserva 99 quedó pendiente");
+        verify(contratistas, times(3)).liberar(99L);
+    }
+
+    @Test
+    void conflictoLocalConLiberacionPendienteInformaLaReserva() {
+        reservaOk();
+        when(persistencia.guardar(7L, 20L, 99L)).thenThrow(new ConflictoEstadoException("ya ASIGNADA"));
+        doThrow(new DependenciaNoDisponibleException("ms-contratistas no está disponible"))
+                .when(contratistas).liberar(99L);
+        assertThatThrownBy(() -> service.asignar(7L, new AsignacionRequest(20L)))
+                .isInstanceOf(DependenciaNoDisponibleException.class)
+                .hasMessageContaining("ya ASIGNADA")
+                .hasMessageContaining("reserva 99 quedó pendiente");
+    }
+
+    @Test
+    void rechazoDefinitivoDeLaLiberacionNoSeReintenta() {
+        reservaOk();
+        when(persistencia.guardar(7L, 20L, 99L)).thenThrow(new DataAccessResourceFailureException("db caída"));
+        doThrow(new RecursoNoEncontradoException("No existe la reserva 99")).when(contratistas).liberar(99L);
+        assertThatThrownBy(() -> service.asignar(7L, new AsignacionRequest(20L)))
+                .isInstanceOf(DependenciaNoDisponibleException.class).hasMessageContaining("pendiente");
+        verify(contratistas, times(1)).liberar(99L);
     }
 
     @Test
