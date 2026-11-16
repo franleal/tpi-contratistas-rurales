@@ -1,0 +1,198 @@
+@startuml er-persistencia
+title Diagrama Entidad-Relación - un esquema por microservicio
+hide circle
+skinparam linetype ortho
+package "Esquema campos (ms-campos, usuario campos_app)" #EAF4E4 {
+  entity productor {
+    * id : bigint <<PK>>
+    --
+    * sub : varchar <<UK>>
+    nombre : varchar
+    email : varchar
+  }
+  entity establecimiento {
+    * id : bigint <<PK>>
+    --
+    * productor_id : bigint <<FK>>
+    * nombre : varchar
+    * provincia : varchar
+  }
+  entity lote {
+    * id : bigint <<PK>>
+    --
+    * establecimiento_id : bigint <<FK>>
+    * nombre : varchar
+    * lat : numeric(9,6)
+    * lon : numeric(9,6)
+    * superficie_ha : numeric(10,2)
+    * cultivo : varchar
+    * provincia : varchar
+    * departamento : varchar
+    * zona : varchar (EXCLUSION | AMORTIGUAMIENTO | LIBRE)
+    localidad_cercana : varchar
+    distancia_localidad_m : integer
+  }
+  entity parametro_zona {
+    * provincia : varchar <<PK>>
+    --
+    * distancia_exclusion_m : integer
+    * distancia_amortiguamiento_m : integer
+    * categorias_permitidas : varchar (ej. "III,IV")
+  }
+}
+package "Esquema contratistas (ms-contratistas, usuario contratistas_app)" #E6EEF8 {
+  entity contratista {
+    * id : bigint <<PK>>
+    --
+    * sub : varchar <<UK>>
+    * razon_social : varchar
+    * cuit : varchar <<UK>>
+  }
+  entity maquina {
+    * id : bigint <<PK>>
+    --
+    * contratista_id : bigint <<FK>>
+    * tipo : varchar (PULVERIZADORA)
+    * descripcion : varchar
+    * ancho_m : numeric(5,2)
+    * rendimiento_ha_h : numeric(6,2)
+    * base_lat : numeric(9,6)
+    * base_lon : numeric(9,6)
+  }
+  entity aplicador {
+    * id : bigint <<PK>>
+    --
+    * contratista_id : bigint <<FK>>
+    * nombre : varchar
+    * documento : varchar
+  }
+  entity habilitacion {
+    * id : bigint <<PK>>
+    --
+    * tipo : varchar (CARNET_APLICADOR | INSPECCION_MAQUINA)
+    aplicador_id : bigint <<FK>>
+    maquina_id : bigint <<FK>>
+    * numero : varchar
+    * vencimiento : date
+    * estado : varchar (PENDIENTE | VALIDADA | RECHAZADA)
+    motivo_rechazo : varchar
+  }
+  entity bloque_disponibilidad {
+    * id : bigint <<PK>>
+    --
+    * maquina_id : bigint <<FK>>
+    * desde : timestamp
+    * hasta : timestamp
+  }
+  entity reserva {
+    * id : bigint <<PK>>
+    --
+    * maquina_id : bigint <<FK>>
+    * orden_id : bigint (id externo, trabajos)
+    * desde : timestamp
+    * hasta : timestamp
+  }
+}
+package "Esquema trabajos (ms-trabajos, usuario trabajos_app)" #FBEFE3 {
+  entity agronomo {
+    * id : bigint <<PK>>
+    --
+    * sub : varchar <<UK>>
+    * nombre : varchar
+    * matricula : varchar
+    * provincia : varchar
+    * vencimiento : date
+    * estado : varchar (PENDIENTE | VALIDADA | RECHAZADA)
+    motivo_rechazo : varchar
+  }
+  entity orden_trabajo {
+    * id : bigint <<PK>>
+    --
+    * productor_sub : varchar
+    * lote_id : bigint (id externo, campos)
+    * lote_lat, lote_lon : numeric
+    * superficie_ha : numeric
+    * zona : varchar
+    * provincia : varchar
+    categorias_permitidas : varchar
+    * fecha_limite : date
+    * estado : varchar
+  }
+  entity receta {
+    * id : bigint <<PK>>
+    --
+    * orden_id : bigint <<FK, UK>>
+    * agronomo_id : bigint <<FK>>
+    * producto : varchar
+    * categoria_toxicologica : varchar
+    * dosis : varchar
+    * firmada_en : timestamp
+  }
+  entity postulacion {
+    * id : bigint <<PK>>
+    --
+    * orden_id : bigint <<FK>>
+    * contratista_sub : varchar
+    * maquina_id, aplicador_id : bigint (ids externos)
+    * inicio, fin : timestamp
+    * traslado_h : numeric
+    * precio_ha : numeric
+    * estado : varchar (VALIDA | ASIGNADA | DESCARTADA)
+  }
+  entity asignacion {
+    * id : bigint <<PK>>
+    --
+    * orden_id : bigint <<FK, UK>>
+    * postulacion_id : bigint <<FK, UK>>
+    * reserva_id : bigint (id externo, contratistas)
+    * asignada_en : timestamp
+  }
+  entity registro_ejecucion {
+    * id : bigint <<PK>>
+    --
+    * orden_id : bigint <<FK, UK>>
+    * inicio, fin : timestamp
+    * hectareas : numeric
+    clima_disponible : boolean
+    fuera_de_condiciones : boolean
+    confirmada_en : timestamp
+  }
+  entity foto_clima {
+    * id : bigint <<PK>>
+    --
+    * ejecucion_id : bigint <<FK>>
+    * hora : timestamp
+    viento_kmh, rafaga_kmh : numeric
+    precipitacion_mm : numeric
+    temperatura_c, humedad_pct : numeric
+    * apta : boolean
+  }
+  entity umbral_climatico {
+    * id : bigint <<PK>> (fila única)
+    --
+    * viento_min_kmh, viento_max_kmh : numeric
+    * rafaga_max_kmh : numeric
+    * temperatura_max_c : numeric
+    * humedad_min_pct : numeric
+    * horas_sin_lluvia_despues : integer
+    * horizonte_dias : integer (<= 16)
+  }
+}
+productor ||--o{ establecimiento
+establecimiento ||--o{ lote
+contratista ||--o{ maquina
+contratista ||--o{ aplicador
+maquina |o--o{ habilitacion
+aplicador |o--o{ habilitacion
+maquina ||--o{ bloque_disponibilidad
+maquina ||--o{ reserva
+orden_trabajo ||--o| receta
+agronomo ||--o{ receta
+orden_trabajo ||--o{ postulacion
+orden_trabajo ||--o| asignacion
+postulacion ||--o| asignacion
+orden_trabajo ||--o| registro_ejecucion
+registro_ejecucion ||--o{ foto_clima
+lote .. orden_trabajo : lote_id (sin FK)
+reserva .. asignacion : reserva_id (sin FK)
+@enduml
