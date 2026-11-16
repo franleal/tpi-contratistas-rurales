@@ -202,6 +202,15 @@ Cambiar `.env` después de la primera inicialización **no cambia automáticamen
    .\api-gateway\mvnw.cmd -f .\agro-commons\pom.xml install
    ```
 
+   La raíz del repositorio tiene un `pom.xml` agregador (multi-proyecto) y su propio Maven Wrapper. Para compilar y probar todo el monorepo de una vez (agro-commons se construye primero):
+
+   ```powershell
+   .\mvnw.cmd install            # compila, prueba e instala agro-commons en .m2
+   .\mvnw.cmd -pl ms-campos -am verify   # solo un servicio y lo que necesita
+   ```
+
+   En IntelliJ alcanza con abrir el `pom.xml` de la raíz: importa los cinco módulos.
+
 4. Crear una configuración de ejecución para cada clase `*Application`. En **Run → Edit Configurations**, usar `-Duser.timezone=America/Argentina/Buenos_Aires` en **VM options** y copiar la contraseña correspondiente del `.env` a `DB_PASSWORD` en **Environment variables**. Compose lee `.env` desde la raíz y las configuraciones de IntelliJ se completan por separado.
 
    | Clase | Puerto | Valor para `DB_PASSWORD` |
