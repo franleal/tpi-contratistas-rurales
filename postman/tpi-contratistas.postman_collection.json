@@ -459,7 +459,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
@@ -546,7 +547,7 @@
                 }
               ]
             },
-            "description": "F-12, RN-09. Usa el pronóstico real de Open-Meteo: si no hay ventanas aptas en la semana, elegir otro inicio a mano."
+            "description": "F-12, RN-09. Usa el pronóstico real de Open-Meteo: si no hay ventanas aptas desde mañana, cargar inicioPostulacion a mano."
           },
           "event": [
             {
@@ -556,8 +557,14 @@
                 "exec": [
                   "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
                   "const v = pm.response.json();",
-                  "if (v.length) { pm.collectionVariables.set(\"inicioPostulacion\", v[0].desde); }",
-                  "pm.test(\"hay al menos una ventana (depende del pronóstico real)\", () => pm.expect(v.length).to.be.above(0));"
+                  "// la agenda de demostración empieza mañana a las 05:00: se elige una ventana desde mañana 06:00",
+                  "// con al menos 4 horas (el lote 1 lleva 4 h de aplicación: 100 ha a 25 ha/h con la máquina 1)",
+                  "const m = new Date(); m.setDate(m.getDate() + 1);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const desde = m.getFullYear() + \"-\" + p(m.getMonth() + 1) + \"-\" + p(m.getDate()) + \"T06:00:00\";",
+                  "const elegida = v.find(x => x.desde >= desde && x.horas >= 4);",
+                  "if (elegida) { pm.collectionVariables.set(\"inicioPostulacion\", elegida.desde); }",
+                  "pm.test(\"hay una ventana apta desde mañana (depende del pronóstico real)\", () => pm.expect(elegida).to.not.be.undefined);"
                 ]
               }
             }
@@ -727,7 +734,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"postulacionId\": \"{{postulacionId}}\"\n}"
+              "raw": "{\n  \"postulacionId\": {{postulacionId}}\n}"
             },
             "description": "F-15: reserva la agenda en ms-contratistas; si falla el guardado local, libera la reserva."
           },
@@ -961,7 +968,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
@@ -1060,7 +1068,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
@@ -1121,7 +1130,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
@@ -1331,7 +1341,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
@@ -1393,7 +1404,8 @@
                 "type": "text/javascript",
                 "exec": [
                   "const hoy = new Date();",
-                  "const iso = d => d.toISOString().substring(0, 10);",
+                  "const p = n => String(n).padStart(2, \"0\");",
+                  "const iso = d => d.getFullYear() + \"-\" + p(d.getMonth() + 1) + \"-\" + p(d.getDate());",
                   "const mas = n => { const d = new Date(hoy); d.setDate(d.getDate() + n); return d; };",
                   "pm.collectionVariables.set(\"fechaLimite\", iso(mas(6)));",
                   "pm.collectionVariables.set(\"inicioDiaCuatro\", iso(mas(4)) + \"T08:00:00\");"
