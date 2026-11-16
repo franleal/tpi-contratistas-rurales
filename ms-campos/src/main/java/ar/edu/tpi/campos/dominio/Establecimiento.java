@@ -8,10 +8,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /** Campo de un productor. Agrupa sus lotes. */
 @Entity
@@ -34,6 +39,10 @@ public class Establecimiento {
 
     @Column(nullable = false, length = 100)
     private String provincia;
+
+    @OneToMany(mappedBy = "establecimiento")
+    @OrderBy("id")
+    private List<Lote> lotes = new ArrayList<>();
 
     public Establecimiento(Productor productor, String nombre, String provincia) {
         this.productor = productor;
