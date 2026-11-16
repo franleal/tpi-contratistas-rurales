@@ -38,6 +38,10 @@ final class Fixtures {
                 {"tipo":"%s","titularId":%d,"numero":"N-%d","vencimiento":"%s"}""".formatted(tipo, titularId, titularId, vence)));
     }
 
+    static void aprobar(MockMvc mvc, long habilitacionId) throws Exception {
+        mvc.perform(post("/api/admin/habilitaciones/" + habilitacionId + "/aprobar").with(Usuarios.ADMIN));
+    }
+
     static long maquina(MockMvc mvc, RequestPostProcessor quien) throws Exception {
         return id(crear(mvc, quien, "/api/maquinas", """
                 {"descripcion":"Pulverizadora autopropulsada","anchoM":28,"rendimientoHaH":25,"baseLat":-31.4,"baseLon":-64.18}"""));
