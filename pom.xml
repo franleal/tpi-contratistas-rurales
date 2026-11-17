@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+    <!--
+        POM agregador: permite compilar y probar todo el monorepo con un solo comando
+        (./mvnw verify). No es padre de los módulos: cada servicio hereda de
+        spring-boot-starter-parent y se puede construir por separado (lo hacen los Dockerfile).
+        agro-commons va primero porque los tres servicios dependen de él.
+    -->
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>ar.edu.tpi</groupId>
+    <artifactId>tpi-contratistas-rurales</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+
+    <name>tpi-contratistas-rurales</name>
+
+    <modules>
+        <module>agro-commons</module>
+        <module>ms-campos</module>
+        <module>ms-contratistas</module>
+        <module>ms-trabajos</module>
+        <module>api-gateway</module>
+    </modules>
+
+</project>

@@ -1,0 +1,8 @@
+# Solo para desarrollo con IntelliJ: publica PostgreSQL en 127.0.0.1:5432 para que los
+# servicios ejecutados fuera de Docker se conecten. NO usar en la demostración (trusted zone).
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d postgres keycloak
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:5432:5432"

@@ -1,0 +1,93 @@
+@startuml proceso-actividad
+title Proceso principal - Pulverización terrestre de punta a punta
+|Productor|
+start
+:Necesita pulverizar un lote
+(evento inicial);
+:F-10 Crear orden sobre el lote
+con fecha límite;
+|ms-trabajos|
+:Pide el lote a ms-campos
+(zona, superficie, provincia);
+if (¿ms-campos responde?) then (no)
+  :503, no se crea la orden;
+  stop
+else (sí)
+endif
+if (RN-06 ¿Lote en zona de exclusión?) then (sí)
+  :422, no se crea la orden;
+  stop
+else (no)
+  :Orden en RECETA_PENDIENTE;
+endif
+|Agrónomo|
+:F-11 Firmar receta
+(producto, categoría, dosis);
+|ms-trabajos|
+if (RN-01 matrícula validada y vigente
+hasta la fecha límite;
+RN-07 categoría permitida en la zona) then (no)
+  :403 / 422, la orden sigue
+en RECETA_PENDIENTE;
+  detach
+else (sí)
+  :Orden ABIERTA;
+endif
+|Contratista|
+:F-12 Consultar ventanas aptas (opcional);
+:F-13 Postularse
+(máquina, aplicador, inicio, precio/ha);
+|ms-trabajos|
+:RN-10 Verificar horizonte del pronóstico
+y fecha límite;
+:Consultar a ms-contratistas habilitación
+de máquina y aplicador (RN-02, RN-03, RN-04);
+:RN-11, RN-12 Calcular horas de trabajo
+y traslado; armar el bloque;
+:Consultar disponibilidad de agenda (RN-13);
+:Consultar Open-Meteo y evaluar
+las horas de aplicación, de inicio a fin (RN-09);
+if (¿Alguna dependencia falla?) then (sí)
+  :503, la postulación no se registra
+(falla segura);
+  detach
+elseif (¿Alguna regla no se cumple?) then (sí)
+  :422 con el motivo;
+  detach
+else (todo OK)
+  :Postulación VALIDA (201);
+endif
+|Productor|
+:F-14 Ver postulaciones ordenadas (RN-14);
+:F-15 Asignar una postulación;
+|ms-trabajos|
+:Revalidar habilitaciones a la fecha (RN-04);
+:Reservar bloque en ms-contratistas (RN-13);
+if (¿Bloque ya reservado?) then (sí)
+  :409, la orden sigue ABIERTA;
+  detach
+else (no)
+endif
+if (¿Falla el guardado local?) then (sí)
+  :Liberar la reserva (compensación);
+  :503, la orden sigue ABIERTA;
+  detach
+else (no)
+  :Orden ASIGNADA;
+endif
+|Contratista|
+:Realiza la aplicación en el campo;
+:F-16 Registrar ejecución
+(inicio, fin, hectáreas);
+|ms-trabajos|
+:RN-15 Hectáreas <= superficie;
+:RN-16 Foto del clima real (Open-Meteo),
+marca "fuera de condiciones" si corresponde;
+:Orden EJECUTADA;
+|Productor|
+:F-17 Confirmar el trabajo (RN-17);
+|ms-trabajos|
+:Orden COMPLETADA
+(resultado final);
+stop
+@enduml
